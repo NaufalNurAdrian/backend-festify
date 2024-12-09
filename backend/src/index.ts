@@ -1,8 +1,9 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import { AuthRouter } from "./routers/auth.router";
-import path from "path";
+// import path from "path";
 import cookieParser from "cookie-parser"
+import { UserRouter } from "./routers/user.router";
 
 const PORT: number = 8000;
 
@@ -20,11 +21,13 @@ app.get("/api", (req: Request, res: Response) => {
   res.status(200).send("Welcome to my API");
 });
 
-app.use("/api/public", express.static(path.join(__dirname, "../public")));
+// app.use("/api/public", express.static(path.join(__dirname, "../public")));
 
 const authRouter = new AuthRouter();
+const userRouter = new UserRouter()
 
 app.use("/api/auth", authRouter.getRouter());
+app.use("/api/users", userRouter.getRouter());
 
 app.listen(PORT, () => {
   console.log(`server running on -> http://localhost:${PORT}/api`);
