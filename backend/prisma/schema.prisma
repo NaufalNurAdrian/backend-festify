@@ -9,25 +9,28 @@ datasource db {
 }
 
 model User {
-  user_id      Int           @id @default(autoincrement())
-  username     String
-  email        String        @unique
-  password     String
-  phone        String?
-  role         Role
-  referralCode String        @unique
-  points       Int           @default(0)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  coupon       Coupon?       @relation(fields: [coupon_id], references: [coupon_id])
-  coupon_id    Int?
-  loginAttempt Int           @default(0)
-  isVerify     Boolean       @default(false)
-  isSuspend    Boolean       @default(false)
-  Event        Event[]
-  Transaction  Transaction[]
-  ReferralLog  ReferralLog[]
-  Review       Review[]
+  user_id                Int           @id @default(autoincrement())
+  username               String
+  email                  String        @unique
+  password               String
+  phone                  String?
+  role                   Role          @default(CUSTOMER)
+  referralCode           String        @unique
+  referredBy_id          Int?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  coupon                 Coupon?       @relation(fields: [coupon_id], references: [coupon_id])
+  coupon_id              Int?
+  loginAttempt           Int           @default(0)
+  isVerify               Boolean       @default(false)
+  isSuspend              Boolean       @default(false)
+  refferal_id            ReferralLog?   @relation(fields: [referral_id], references: [referral_id])
+  Event                  Event[]
+  Transaction            Transaction[]
+  Review                 Review[]
+  referral_id            Int?    
+  points Int    @default(0)
+  avatar String?
 }
 
 model Event {
@@ -69,36 +72,37 @@ model OrderDetail {
 }
 
 model Transaction {
-  transaction_id      Int           @id @default(autoincrement())
-  user                User          @relation(fields: [user_id], references: [user_id])
-  totalPrice          Float
-  paymentMethod       PaymentMethod
-  referralUsed        Boolean       @default(false)
-  discount            Coupon?        @relation(fields: [coupon_Id], references: [coupon_id])
-  transactionDate     DateTime      @default(now())
-  payment             Payment?
-  createdAt           DateTime      @default(now())
-  user_id             Int
-  orderDetail         OrderDetail   @relation(fields: [orderDetail_id], references: [order_id])
-  coupon_Id           Int?
-  orderDetail_id Int
+  transaction_id  Int           @id @default(autoincrement())
+  user            User          @relation(fields: [user_id], references: [user_id])
+  totalPrice      Float
+  paymentMethod   PaymentMethod
+  referralUsed    Boolean       @default(false)
+  discount        Coupon?       @relation(fields: [coupon_Id], references: [coupon_id])
+  transactionDate DateTime      @default(now())
+  payment         Payment?
+  createdAt       DateTime      @default(now())
+  user_id         Int
+  orderDetail     OrderDetail   @relation(fields: [orderDetail_id], references: [order_id])
+  coupon_Id       Int?
+  orderDetail_id  Int
 }
 
 model Coupon {
   coupon_id      Int           @id @default(autoincrement())
   discountAmount Float         @default(0.0)
   used           Boolean
+  expiresAt      DateTime
   Transaction    Transaction[]
   User           User[]
 }
 
 model ReferralLog {
   referral_id   Int      @id @default(autoincrement())
-  referred      User     @relation(fields: [user_id], references: [user_id])
   pointsAwarded Int
   createdAt     DateTime @default(now())
-  user_id       Int
+  expiresAt     DateTime
   used          Boolean
+  User          User[]
 }
 
 model Payment {
@@ -111,7 +115,7 @@ model Payment {
   updatedAt      DateTime      @updatedAt
   transaction_id Int           @unique
   expierdAt      DateTime
-  redirect_url String?
+  redirect_url   String?
 }
 
 model Promotion {
