@@ -9,28 +9,28 @@ datasource db {
 }
 
 model User {
-  user_id                Int           @id @default(autoincrement())
-  username               String
-  email                  String        @unique
-  password               String
-  phone                  String?
-  role                   Role          @default(CUSTOMER)
-  referralCode           String        @unique
-  referredBy_id          Int?
-  createdAt              DateTime      @default(now())
-  updatedAt              DateTime      @updatedAt
-  coupon                 Coupon?       @relation(fields: [coupon_id], references: [coupon_id])
-  coupon_id              Int?
-  loginAttempt           Int           @default(0)
-  isVerify               Boolean       @default(false)
-  isSuspend              Boolean       @default(false)
-  refferal_id            ReferralLog?   @relation(fields: [referral_id], references: [referral_id])
-  Event                  Event[]
-  Transaction            Transaction[]
-  Review                 Review[]
-  referral_id            Int?    
-  points Int    @default(0)
-  avatar String?
+  user_id       Int           @id @default(autoincrement())
+  username      String
+  email         String        @unique
+  password      String
+  phone         String?
+  role          Role          @default(CUSTOMER)
+  referralCode  String        @unique
+  referredBy_id Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  coupon        Coupon?       @relation(fields: [coupon_id], references: [coupon_id])
+  coupon_id     Int?
+  loginAttempt  Int           @default(0)
+  isVerify      Boolean       @default(false)
+  isSuspend     Boolean       @default(false)
+  refferal_id   ReferralLog?  @relation(fields: [referral_id], references: [referral_id])
+  Event         Event[]
+  Transaction   Transaction[]
+  Review        Review[]
+  referral_id   Int?
+  points        Int           @default(0)
+  avatar        String?
 }
 
 model Event {
@@ -46,6 +46,9 @@ model Event {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   user_id     Int
+  thumbnail   String
+  slug        String      @unique
+  category    Category
   Ticket      Ticket[]
   Promotion   Promotion[]
   Review      Review[]
@@ -60,6 +63,7 @@ model Ticket {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   event_id    Int
+  lastOrder   DateTime
   OrderDetail OrderDetail[]
 }
 
@@ -168,4 +172,11 @@ enum TicketType {
   STANDARD
   VIP
   VVIP
+}
+
+enum Category {
+  MUSIC
+  FILM
+  SPORT
+  EDUCATION
 }
