@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { findUser } from "../services/auth.sevices";
 import { compare, genSalt, hash } from "bcrypt";
 import prisma from "../prisma";
-import { sign } from "jsonwebtoken";
+import { sign, verify } from "jsonwebtoken";
 import path from "path";
 import fs from "fs";
 import handlebars from "handlebars";
@@ -76,7 +76,7 @@ export class AuthController {
       // Kirim email verifikasi
       const payload = { id: newUser.user_id, role: newUser.role };
       const token = sign(payload, process.env.JWT_KEY!, { expiresIn: "10m" });
-      const link = `http://localhost:3000/${token}`;
+      const link = `http://localhost:3000/verify/${token}`;
 
       const templatePath = path.join(__dirname, "../templates", "verify.hbs");
       const templateSource = fs.readFileSync(templatePath, "utf-8");
@@ -142,7 +142,6 @@ export class AuthController {
         .cookie("token", token, {
           httpOnly: true,
           maxAge: 24 * 3600 * 1000,
-          path: "/dashboard",
           secure: process.env.NODE_ENV === "production",
         })
         .send({
@@ -152,6 +151,47 @@ export class AuthController {
     } catch (err) {
       console.error(err);
       res.status(400).send(err);
+    }
+  }
+  async verifyUser(req: Request, res: Response) {
+    try {
+      const { token } = req.params;
+      const verifiedUser: any = verify(token, process.env.JWT_KEY!);
+      await prisma.user.update({
+        data: { isVerify: true },
+        where: { user_id: verifiedUser.id },
+      });
+      res.status(200).send({ message: "Verify Successfully" });
+    } catch (err) {
+      console.log(err);
+      res.status(400).send(err);
+    }
+  }
+  async changeRoleCustomer(req: Request, res: Response) {
+    try {
+      const {role} = req.body
+      await prisma.user.update({
+        where: {user_id: role.user_id },
+        data: {role: "CUSTOMER"}
+      })
+      res.status(200).send({message: "Success change to Customer"})
+    } catch(err) {
+      console.log(err);
+      res.status(400).send({message: "Cannot Change Role"})
+    }
+  }
+  async changeRoleOrganaizer(req: Request, res: Response) {
+    try {
+      const {role} = req.body
+      await prisma.user.update({
+        where: {user_id: role.user_id },
+        data: {role: "ORGANIZER"}
+      })
+      res.status(200).send({message: "Success change to Organizer"})
+    } catch(err) {
+      console.log(err);
+      res.status(400).send({message: "Cannot Change Role"})
+      
     }
   }
 }
