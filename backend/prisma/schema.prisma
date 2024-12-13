@@ -57,7 +57,7 @@ model Event {
 model Ticket {
   ticket_id   Int           @id @default(autoincrement())
   type        TicketType
-  price       Float         @default(0.0)
+  price       Int           @default(0)
   seats       Int
   event       Event         @relation(fields: [event_id], references: [event_id])
   createdAt   DateTime      @default(now())
