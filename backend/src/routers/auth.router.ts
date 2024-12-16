@@ -18,8 +18,6 @@ export class AuthRouter{
         this.router.post("/register", this.authController.registerUser);
         this.router.post("/login", this.authController.loginUser);
         this.router.get("/profile", verifyToken, this.userController.getUserId)
-        this.router.patch("/customer", this.authController.changeRoleCustomer)
-        this.router.patch("/organizer", this.authController.changeRoleOrganaizer)
 
         this.router.patch("/verify/:token", this.authController.verifyUser)
     }

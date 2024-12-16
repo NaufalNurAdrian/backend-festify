@@ -14,7 +14,6 @@ model User {
   email         String        @unique
   password      String
   phone         String?
-  role          Role          @default(CUSTOMER)
   referralCode  String        @unique
   referredBy_id Int?
   createdAt     DateTime      @default(now())
@@ -143,11 +142,6 @@ model Review {
   createdAt DateTime @default(now())
   event_id  Int
   user_id   Int
-}
-
-enum Role {
-  CUSTOMER
-  ORGANIZER
 }
 
 enum EventStatus {

@@ -16,10 +16,10 @@ export class UserRouter {
   private initializeRoutes() {
     this.router.get("/profile", verifyToken, this.userController.getUserId);
     this.router.patch(
-      "/avatar-cloud",
+      "/avatar",
       verifyToken,
-      uploader("memoryStorage", "avatar").single("file"),
-      this.userController.editAvatarCloud
+      uploader().single("file"),
+      this.userController.editAvatar
     );
 
     this.router.patch("/:id", this.userController.editUser);

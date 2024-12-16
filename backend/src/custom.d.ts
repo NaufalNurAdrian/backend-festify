@@ -1,8 +1,9 @@
 import "express";
-import { RoleUser } from "@prisma/client";
+
+const RoleUser = "ORGANIZER" || "CUSTOMER"
 
 export type UserPayload = {
-  id: number;
+  user_id: number;
   role: RoleUser;
 };
 
