@@ -5,6 +5,7 @@ import { AuthRouter } from "./routers/auth.router";
 import cookieParser from "cookie-parser";
 import { UserRouter } from "./routers/user.router";
 import { EventRouter } from "./routers/event.router";
+import { TicketRouter } from "./routers/ticket.router";
 
 const PORT: number = 8000;
 
@@ -27,10 +28,12 @@ app.get("/api", (req: Request, res: Response) => {
 const authRouter = new AuthRouter();
 const userRouter = new UserRouter();
 const eventsRouter = new EventRouter();
+const ticketRouter = new TicketRouter();
 
 app.use("/api/auth", authRouter.getRouter());
 app.use("/api/users", userRouter.getRouter());
 app.use("/api/event", eventsRouter.getRouter());
+app.use("/api/tickets", ticketRouter.getRouter());
 
 app.listen(PORT, () => {
   console.log(`server running on -> http://localhost:${PORT}/api`);
