@@ -8,7 +8,7 @@ export class UserController {
   async getUserId(req: Request, res: Response) {
     try {
       const user = await prisma.user.findUnique({
-        where: { user_id: req.user?.id },
+        where: { user_id: req.user?.user_id },
       });
       res.status(200).send({ user });
     } catch (err) {
@@ -38,15 +38,15 @@ export class UserController {
     }
   }
   
-  async editAvatarCloud(req: Request, res: Response) {
+  async editAvatar(req: Request, res: Response) {
     try {
       const file = req.file as Express.Multer.File;
-      if (file) throw { message: "file empty" };
+      if (!file) throw { message: "file empty" };
       const { secure_url } = await cloudinaryUpload(file, "avatar");
 
       await prisma.user.update({
         data: { avatar: secure_url },
-        where: { user_id: req.user?.id },
+        where: { user_id: req.user?.user_id },
       });
       res.status(200).send({ message: "avatar edited !" });
     } catch (err) {

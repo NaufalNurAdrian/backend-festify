@@ -74,7 +74,7 @@ export class AuthController {
       const newUser = await prisma.user.create({ data: newUserData });
 
       // Kirim email verifikasi
-      const payload = { id: newUser.user_id, role: newUser.role };
+      const payload = { id: newUser.user_id };
       const token = sign(payload, process.env.JWT_KEY!, { expiresIn: "10m" });
       const link = `http://localhost:3000/verify/${token}`;
 
@@ -96,7 +96,6 @@ export class AuthController {
       res.status(400).send(err);
     }
   }
-  
   async loginUser(req: Request, res: Response) {
     try {
       const { data, password } = req.body;
@@ -134,7 +133,7 @@ export class AuthController {
       if (!process.env.JWT_KEY) {
         throw new Error("JWT_KEY is not defined in environment variables!");
       }
-      const payload = { id: user.user_id, role: user.role };
+      const payload = { id: user.user_id };
       const token = sign(payload, process.env.JWT_KEY, { expiresIn: "1d" });
 
       res
@@ -142,7 +141,7 @@ export class AuthController {
         .cookie("token", token, {
           httpOnly: true,
           maxAge: 24 * 3600 * 1000,
-          secure: process.env.NODE_ENV === "production",
+          secure: process.env.JWT_KEY! === "production",
         })
         .send({
           message: "Login Successfully ✅",
@@ -165,33 +164,6 @@ export class AuthController {
     } catch (err) {
       console.log(err);
       res.status(400).send(err);
-    }
-  }
-  async changeRoleCustomer(req: Request, res: Response) {
-    try {
-      const {role} = req.body
-      await prisma.user.update({
-        where: {user_id: role.user_id },
-        data: {role: "CUSTOMER"}
-      })
-      res.status(200).send({message: "Success change to Customer"})
-    } catch(err) {
-      console.log(err);
-      res.status(400).send({message: "Cannot Change Role"})
-    }
-  }
-  async changeRoleOrganaizer(req: Request, res: Response) {
-    try {
-      const {role} = req.body
-      await prisma.user.update({
-        where: {user_id: role.user_id },
-        data: {role: "ORGANIZER"}
-      })
-      res.status(200).send({message: "Success change to Organizer"})
-    } catch(err) {
-      console.log(err);
-      res.status(400).send({message: "Cannot Change Role"})
-      
     }
   }
 }
