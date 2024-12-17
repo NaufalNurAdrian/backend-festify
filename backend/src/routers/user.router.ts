@@ -15,12 +15,12 @@ export class UserRouter {
 
   private initializeRoutes() {
     this.router.get("/profile", verifyToken, this.userController.getUserId);
-    this.router.patch(
-      "/avatar",
-      verifyToken,
-      uploader().single("file"),
-      this.userController.editAvatar
-    );
+    // this.router.patch(
+    //   "/avatar",
+    //   verifyToken,
+    //   uploader().single("file"),
+    //   this.userController.editAvatar
+    // );
 
     this.router.patch("/:id", this.userController.editUser);
     this.router.delete("/:id", this.userController.deleteUser);

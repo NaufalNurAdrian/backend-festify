@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import prisma from "../prisma";
 import { Prisma } from "@prisma/client";
+import { createSlug } from "../helpers/slug";
+import { cloudinaryUpload } from "../services/cloudinary";
 
 export class EventController {
   async getEventId(req: Request, res: Response) {
@@ -78,4 +80,50 @@ export class EventController {
       res.status(400).send({ message: "Error Not Found" });
     }
   }
+
+  async createEvent(req: Request, res: Response) {
+    try {
+      const { title, description, category, startTime, endTime, location } =
+        req.body;
+
+      const slug = createSlug(title);
+      const { organizer } = req.params;
+
+      let thumbnailUrl = "";
+
+      // Cek apakah ada file thumbnail di request
+      if (req.file) {
+        const result = await cloudinaryUpload(req.file, "events");
+        thumbnailUrl = result.secure_url;
+      }
+
+      // Simpan event ke database
+      await prisma.event.create({
+        data: {
+          title,
+          description,
+          category,
+          startTime,
+          endTime,
+          location,
+          thumbnail: thumbnailUrl,
+          slug,
+          organizer: {
+            connect: { user_id: +organizer },
+          },
+        },
+      });
+
+      res.status(200).send({ message: "Event created successfully" });
+    } catch (err) {
+      console.error(err);
+      res.status(400).send({ message: "Error" });
+    }
+  }
+
+  // async createTicket(req: Request, res: Response) {
+  //   try {
+  //     const {};
+  //   } catch (err) {}
+  // }
 }
