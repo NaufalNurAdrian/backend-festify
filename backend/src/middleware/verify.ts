@@ -10,8 +10,9 @@ export const verifyToken = async (
   try {
     const token = req.cookies?.token;
     if (!token) throw { message: "Unauthorize!" };
-
+    
     const verifiedUser = verify(token, process.env.JWT_KEY!);
+    console.log(verifiedUser);
 
     req.user = verifiedUser as UserPayload;
 

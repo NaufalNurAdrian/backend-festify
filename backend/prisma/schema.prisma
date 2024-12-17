@@ -30,6 +30,7 @@ model User {
   referral_id   Int?
   points        Int           @default(0)
   avatar        String?
+  Payment       Payment[]
 }
 
 model Event {
@@ -113,19 +114,21 @@ model Payment {
   transaction    Transaction   @relation(fields: [transaction_id], references: [transaction_id])
   paymentMethod  PaymentMethod
   paymentStatus  PaymentStatus @default(PENDING)
-  amount         Float
+  amount         Int
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   transaction_id Int           @unique
   expierdAt      DateTime
   redirect_url   String?
+  user        User          @relation(fields: [user_id], references: [user_id])
+  user_id    Int 
 }
 
 model Promotion {
   promotion_id Int      @id @default(autoincrement())
   code         String   @unique
   event        Event    @relation(fields: [event_id], references: [event_id])
-  discount     Float    @default(0.0)
+  discount     Int    
   maxUsage     Int
   currentUsage Int      @default(0)
   expiresAt    DateTime
