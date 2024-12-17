@@ -133,7 +133,7 @@ export class AuthController {
       if (!process.env.JWT_KEY) {
         throw new Error("JWT_KEY is not defined in environment variables!");
       }
-      const payload = { id: user.user_id };
+      const payload = { user_id: user.user_id };
       const token = sign(payload, process.env.JWT_KEY, { expiresIn: "1d" });
 
       res
@@ -141,7 +141,7 @@ export class AuthController {
         .cookie("token", token, {
           httpOnly: true,
           maxAge: 24 * 3600 * 1000,
-          secure: process.env.JWT_KEY! === "production",
+          secure: true,
         })
         .send({
           message: "Login Successfully ✅",
