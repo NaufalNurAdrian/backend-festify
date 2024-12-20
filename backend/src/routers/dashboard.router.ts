@@ -12,6 +12,7 @@ export class DashboardRouter{
         this.initializeRoutes()
     }
     private initializeRoutes() {
+        this.router.get("/payments/total-income", this.dashboardControlller.getIncomePerday);
         this.router.get("/event-active/:user_id", this.dashboardControlller.getEventActive)
         this.router.get("/event-deactive/:user_id", this.dashboardControlller.getEventDeactive)
         this.router.get("/event-transaction/:user_id", this.dashboardControlller.getTotalTransaction)
