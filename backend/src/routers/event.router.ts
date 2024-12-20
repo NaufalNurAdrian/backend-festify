@@ -22,6 +22,11 @@ export class EventRouter {
       uploader("memoryStorage", "event_").single("thumbnail"),
       this.eventController.createEvent
     );
+
+    this.router.post(
+      "/create/ticket/:event_id",
+      this.eventController.createTicket
+    );
     this.router.get("/:slug", this.eventController.getEventSlug);
   }
 

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma";
 import { Prisma, TicketType } from "@prisma/client";
 import { createSlug } from "../helpers/slug";
@@ -81,15 +81,8 @@ export class EventController {
     }
   }
   async createEvent(req: Request, res: Response): Promise<void> {
-    const {
-      title,
-      description,
-      location,
-      startTime,
-      endTime,
-      category,
-      tickets,
-    } = req.body;
+    const { title, description, location, startTime, endTime, category } =
+      req.body;
 
     const userId = Number(req.params.user_id);
 
@@ -144,43 +137,57 @@ export class EventController {
         },
       });
 
-      // Tambahkan tiket jika tersedia
-      if (tickets && Array.isArray(tickets) && tickets.length > 0) {
-        const ticketData = tickets.map((ticket: any) => ({
-          type: ticket.type,
-          price: ticket.price,
-          seats: ticket.seats,
-          lastOrder: new Date(ticket.lastOrder),
-          event_id: event.event_id,
-        }));
-
-        // Validasi tiket sebelum menyimpan
-        if (ticketData.some((t) => isNaN(t.lastOrder.getTime()))) {
-          res.status(400).json({ message: "Invalid date format in tickets" });
-          return;
-        }
-
-        await prisma.ticket.createMany({ data: ticketData });
-      }
-
-      // Respon berhasil
       res.status(201).json({
-        message: "Event and tickets created successfully",
-        event,
+        message: "Event created successfully",
+        event_id: event.event_id, // Kembalikan event_id untuk pembuatan tiket
       });
     } catch (error: any) {
       console.error("Error caught in createEvent:", error);
+      res
+        .status(500)
+        .json({ message: "Internal server error", error: error.message });
+    }
+  }
+  async createTicket(req: Request, res: Response): Promise<void> {
+    const eventId = Number(req.params.event_id);
+    const { tickets } = req.body;
 
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2002") {
-          res
-            .status(400)
-            .json({ message: "Duplicate slug. Try another title." });
-          return;
-        }
+    try {
+      // Validasi event apakah ada
+      const event = await prisma.event.findUnique({
+        where: { event_id: eventId },
+      });
+      if (!event) {
+        res.status(404).json({ message: "Event not found" });
+        return;
       }
 
-      // Tanggapi error lainnya
+      // Validasi tiket
+      if (!tickets || tickets.length === 0) {
+        res.status(400).json({ message: "At least one ticket is required" });
+        return;
+      }
+
+      // Validasi dan persiapkan data tiket
+      const ticketData = tickets.map((ticket: any) => ({
+        type: ticket.type,
+        price: ticket.price,
+        seats: ticket.seats,
+        lastOrder: new Date(ticket.lastOrder),
+        event_id: eventId, // Relasikan dengan event_id yang sudah ada
+      }));
+
+      // Validasi format lastOrder untuk setiap tiket
+
+      // Simpan tiket
+      await prisma.ticket.createMany({ data: ticketData });
+
+      res.status(201).json({
+        message: "Tickets created successfully",
+        tickets: ticketData, // Kembalikan data tiket yang dibuat
+      });
+    } catch (error: any) {
+      console.error("Error caught in createTicket:", error);
       res
         .status(500)
         .json({ message: "Internal server error", error: error.message });
