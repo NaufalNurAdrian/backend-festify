@@ -5,7 +5,7 @@ export class DashboardController {
   async getEventActive(req: Request, res: Response) {
     try {
       // Ambil user_id dari parameter URL
-      const userId = +req.params.user_id;
+      const userId = req.user?.user_id
 
       if (!userId) {
         res.status(400).send({ error: "Invalid user ID" });
@@ -21,8 +21,7 @@ export class DashboardController {
 
       // Kirim response hanya sekali
       res.status(200).send({
-        activeEvent,
-        userId
+        activeEvent
       });
     } catch (error) {
       console.error("Error fetching dashboard stats: ", error);
@@ -32,7 +31,7 @@ export class DashboardController {
   async getEventDeactive(req: Request, res: Response) {
     try {
       // Ambil user_id dari parameter URL
-      const userId = +req.params.user_id;
+      const userId = req.user?.user_id
 
       if (!userId) {
         res.status(400).send({ error: "Invalid user ID" });
@@ -48,8 +47,7 @@ export class DashboardController {
 
       // Kirim response hanya sekali
       res.status(200).send({
-        deactiveEvent,
-        userId
+        deactiveEvent
       });
     } catch (error) {
       console.error("Error fetching dashboard stats: ", error);
@@ -58,7 +56,7 @@ export class DashboardController {
   }
   async getTotalTransaction(req: Request, res: Response) {
     try {
-      const userId = +req.params.user_id;
+      const userId = req.user?.user_id
 
       if (!userId) {
         res.status(400).send({ error: "Invalid user ID" });
@@ -76,8 +74,7 @@ export class DashboardController {
       });
 
       res.status(200).send({
-        totalTransaction: totalTransaction._sum.amount,
-        userId,
+        totalTransaction: totalTransaction._sum.amount
         
       });
     } catch (error) {
@@ -85,39 +82,41 @@ export class DashboardController {
       res.status(500).send({ message: "Internal Server Error" });
     }
   }
+
   async getIncomePerday(req: Request, res: Response) {
-    try {
-      const user_id = req.user?.user_id; // Pastikan `req.user` sudah tersedia dari middleware auth
-      
-      if (!user_id) {
-        res.status(401).send({ message: "Unauthorized: user not logged in" });
-      }
+  try {
+    const userId = req.user?.user_id;
 
-      // Query untuk menghitung total penghasilan per hari berdasarkan user_id
-      const incomePerDay = await prisma.payment.groupBy({
-        by: ["createdAt"], // Group berdasarkan tanggal
-        _sum: {
-          amount: true, // Hitung total jumlah `amount`
-        },
-        where: {
-          user_id: user_id, // Filter berdasarkan user yang sedang login
-          paymentStatus: "COMPLETED", // Hanya hitung pembayaran yang berhasil
-        },
-        orderBy: {
-          createdAt: "asc", // Urutkan berdasarkan tanggal (opsional)
-        },
-      });
-
-      // Format data untuk merapikan tanggal (hanya ambil tanggal tanpa waktu)
-      const formattedData = incomePerDay.map((entry) => ({
-        date: entry.createdAt.toISOString().split("T")[0], // Ambil tanggal (YYYY-MM-DD)
-        totalIncome: entry._sum.amount || 0, // Total penghasilan (default 0 jika null)
-      }));
-
-      res.status(200).send({ incomePerDay: formattedData });
-    } catch (error) {
-      res.status(400).send({message: "cannot get data income per day"})
+    if (!userId) {
+      res.status(401).send({ message: "Unauthorized: user not logged in" });
     }
+
+    const incomePerDay = await prisma.payment.groupBy({
+      by: ["createdAt"], // Pastikan properti ada di model Prisma
+      _sum: {
+        amount: true,
+      },
+      where: {
+        user_id: userId,
+        paymentStatus: "COMPLETED",
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    // Format data
+    const formattedData = incomePerDay.map((entry) => ({
+      date: entry.createdAt.toISOString().split("T")[0], // Format tanggal
+      totalIncome: entry._sum.amount ?? 0, // Gunakan default value
+    }));
+
+    res.status(200).send({ incomePerDay: formattedData });
+  } catch (error) {
+    console.error("Error fetching income per day: ", error);
+    res.status(500).send({ message: "Internal Server Error" });
   }
+}
+
   
 }
