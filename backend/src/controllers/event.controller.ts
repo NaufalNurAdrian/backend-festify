@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma, TicketType } from "@prisma/client";
 import { createSlug } from "../helpers/slug";
 import { cloudinaryUpload } from "../services/cloudinary";
 
@@ -80,50 +80,110 @@ export class EventController {
       res.status(400).send({ message: "Error Not Found" });
     }
   }
+  async createEvent(req: Request, res: Response): Promise<void> {
+    const {
+      title,
+      description,
+      location,
+      startTime,
+      endTime,
+      category,
+      tickets,
+    } = req.body;
 
-  async createEvent(req: Request, res: Response) {
+    const userId = Number(req.params.user_id);
+
     try {
-      const { title, description, category, startTime, endTime, location } =
-        req.body;
-
-      const slug = createSlug(title);
-      const { organizer } = req.params;
-
-      let thumbnailUrl = "";
-
-      // Cek apakah ada file thumbnail di request
-      if (req.file) {
-        const result = await cloudinaryUpload(req.file, "events");
-        thumbnailUrl = result.secure_url;
+      // Validasi user
+      const user = await prisma.user.findUnique({
+        where: { user_id: userId },
+      });
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
       }
 
-      // Simpan event ke database
-      await prisma.event.create({
+      // Validasi dan unggah thumbnail ke Cloudinary
+      if (!req.file) {
+        res.status(400).json({ message: "Thumbnail is required" });
+        return;
+      }
+
+      const uploadResult = await cloudinaryUpload(req.file, "event");
+
+      // Generate slug unik
+      let slug = createSlug(title);
+      let attempt = 0;
+      while (await prisma.event.findUnique({ where: { slug } })) {
+        attempt++;
+        slug = createSlug(`${title}-${attempt}`);
+      }
+
+      // Validasi waktu
+      const parsedStartTime = new Date(startTime);
+      const parsedEndTime = new Date(endTime);
+      if (isNaN(parsedStartTime.getTime()) || isNaN(parsedEndTime.getTime())) {
+        res
+          .status(400)
+          .json({ message: "Invalid date format for startTime or endTime" });
+        return;
+      }
+
+      // Buat event di database
+      const event = await prisma.event.create({
         data: {
           title,
           description,
-          category,
-          startTime,
-          endTime,
           location,
-          thumbnail: thumbnailUrl,
+          startTime: parsedStartTime,
+          endTime: parsedEndTime,
+          category,
           slug,
-          organizer: {
-            connect: { user_id: +organizer },
-          },
+          thumbnail: uploadResult.secure_url, // URL hasil upload
+          user_id: userId,
         },
       });
 
-      res.status(200).send({ message: "Event created successfully" });
-    } catch (err) {
-      console.error(err);
-      res.status(400).send({ message: "Error" });
+      // Tambahkan tiket jika tersedia
+      if (tickets && Array.isArray(tickets) && tickets.length > 0) {
+        const ticketData = tickets.map((ticket: any) => ({
+          type: ticket.type,
+          price: ticket.price,
+          seats: ticket.seats,
+          lastOrder: new Date(ticket.lastOrder),
+          event_id: event.event_id,
+        }));
+
+        // Validasi tiket sebelum menyimpan
+        if (ticketData.some((t) => isNaN(t.lastOrder.getTime()))) {
+          res.status(400).json({ message: "Invalid date format in tickets" });
+          return;
+        }
+
+        await prisma.ticket.createMany({ data: ticketData });
+      }
+
+      // Respon berhasil
+      res.status(201).json({
+        message: "Event and tickets created successfully",
+        event,
+      });
+    } catch (error: any) {
+      console.error("Error caught in createEvent:", error);
+
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === "P2002") {
+          res
+            .status(400)
+            .json({ message: "Duplicate slug. Try another title." });
+          return;
+        }
+      }
+
+      // Tanggapi error lainnya
+      res
+        .status(500)
+        .json({ message: "Internal server error", error: error.message });
     }
   }
-
-  // async createTicket(req: Request, res: Response) {
-  //   try {
-  //     const {};
-  //   } catch (err) {}
-  // }
 }

@@ -46,7 +46,7 @@ model Event {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   user_id     Int
-  thumbnail   String
+  thumbnail   String?     @default("https://res.cloudinary.com/dxpeofir6/image/upload/v1734167683/eventdefault_fuvrcj.webp")
   slug        String      @unique
   category    Category
   Ticket      Ticket[]
@@ -120,15 +120,15 @@ model Payment {
   transaction_id Int           @unique
   expierdAt      DateTime
   redirect_url   String?
-  user        User          @relation(fields: [user_id], references: [user_id])
-  user_id    Int 
+  user           User          @relation(fields: [user_id], references: [user_id])
+  user_id        Int
 }
 
 model Promotion {
   promotion_id Int      @id @default(autoincrement())
   code         String   @unique
   event        Event    @relation(fields: [event_id], references: [event_id])
-  discount     Int    
+  discount     Int
   maxUsage     Int
   currentUsage Int      @default(0)
   expiresAt    DateTime
@@ -166,6 +166,7 @@ enum PaymentMethod {
 }
 
 enum TicketType {
+  FREE
   STANDARD
   VIP
   VVIP

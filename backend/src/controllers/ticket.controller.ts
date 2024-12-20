@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import prisma from "../prisma";
-import { Prisma } from "@prisma/client";
 
 export class TicketController {
   // Metode async untuk mengupdate jumlah kursi
