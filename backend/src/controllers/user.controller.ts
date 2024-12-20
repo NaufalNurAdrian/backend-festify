@@ -1,13 +1,11 @@
 import { Request, Response } from "express";
 import prisma from "../prisma";
-import { Prisma } from "@prisma/client";
 import { cloudinaryUpload } from "../services/cloudinary";
 import { sign, verify } from "jsonwebtoken";
 import path from "path";
 import fs from "fs";
 import handlebars from "handlebars";
 import { transporter } from "../services/mailer";
-import { genSalt, hash } from "bcrypt";
 import { findUser } from "../services/auth.sevices";
 import bcrypt from "bcrypt";
 
