@@ -3,6 +3,7 @@ import { UserController } from "../controllers/user.controller";
 import { checkAdmin, verifyToken } from "../middleware/verify";
 import { uploader } from "../services/uploader";
 
+
 export class UserRouter {
   private userController: UserController;
   private router: Router;
@@ -18,10 +19,12 @@ export class UserRouter {
     this.router.patch(
       "/avatar",
       verifyToken,
-      uploader().single("file"),
+      uploader("memoryStorage", "avatar").single("avatar"),
       this.userController.editAvatar
     );
+    this.router.post("/verify-forgot", this.userController.verifyForgotPass)
 
+    this.router.patch("/forgot-password/:token", this.userController.editPassword)
     this.router.patch("/:id", this.userController.editUser);
     this.router.delete("/:id", this.userController.deleteUser);
   }
