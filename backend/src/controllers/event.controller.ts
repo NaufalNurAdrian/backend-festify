@@ -1,6 +1,8 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma, TicketType } from "@prisma/client";
+import { createSlug } from "../helpers/slug";
+import { cloudinaryUpload } from "../services/cloudinary";
 
 export class EventController {
   async getEventId(req: Request, res: Response) {
@@ -76,6 +78,119 @@ export class EventController {
     } catch (err) {
       console.log(err);
       res.status(400).send({ message: "Error Not Found" });
+    }
+  }
+  async createEvent(req: Request, res: Response): Promise<void> {
+    const { title, description, location, startTime, endTime, category } =
+      req.body;
+
+    const userId = Number(req.params.user_id);
+
+    try {
+      // Validasi user
+      const user = await prisma.user.findUnique({
+        where: { user_id: userId },
+      });
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
+      // Validasi dan unggah thumbnail ke Cloudinary
+      if (!req.file) {
+        res.status(400).json({ message: "Thumbnail is required" });
+        return;
+      }
+
+      const uploadResult = await cloudinaryUpload(req.file, "event");
+
+      // Generate slug unik
+      let slug = createSlug(title);
+      let attempt = 0;
+      while (await prisma.event.findUnique({ where: { slug } })) {
+        attempt++;
+        slug = createSlug(`${title}-${attempt}`);
+      }
+
+      // Validasi waktu
+      const parsedStartTime = new Date(startTime);
+      const parsedEndTime = new Date(endTime);
+      if (isNaN(parsedStartTime.getTime()) || isNaN(parsedEndTime.getTime())) {
+        res
+          .status(400)
+          .json({ message: "Invalid date format for startTime or endTime" });
+        return;
+      }
+
+      // Buat event di database
+      const event = await prisma.event.create({
+        data: {
+          title,
+          description,
+          location,
+          startTime: parsedStartTime,
+          endTime: parsedEndTime,
+          category,
+          slug,
+          thumbnail: uploadResult.secure_url, // URL hasil upload
+          user_id: userId,
+        },
+      });
+
+      res.status(201).json({
+        message: "Event created successfully",
+        event_id: event.event_id, // Kembalikan event_id untuk pembuatan tiket
+      });
+    } catch (error: any) {
+      console.error("Error caught in createEvent:", error);
+      res
+        .status(500)
+        .json({ message: "Internal server error", error: error.message });
+    }
+  }
+  async createTicket(req: Request, res: Response): Promise<void> {
+    const eventId = Number(req.params.event_id);
+    const { tickets } = req.body;
+
+    try {
+      // Validasi event apakah ada
+      const event = await prisma.event.findUnique({
+        where: { event_id: eventId },
+      });
+      if (!event) {
+        res.status(404).json({ message: "Event not found" });
+        return;
+      }
+
+      // Validasi tiket
+      if (!tickets || tickets.length === 0) {
+        res.status(400).json({ message: "At least one ticket is required" });
+        return;
+      }
+
+      // Validasi dan persiapkan data tiket
+      const ticketData = tickets.map((ticket: any) => ({
+        type: ticket.type,
+        price: ticket.price,
+        seats: ticket.seats,
+        lastOrder: new Date(ticket.lastOrder),
+        event_id: eventId, // Relasikan dengan event_id yang sudah ada
+      }));
+
+      // Validasi format lastOrder untuk setiap tiket
+
+      // Simpan tiket
+      await prisma.ticket.createMany({ data: ticketData });
+
+      res.status(201).json({
+        message: "Tickets created successfully",
+        tickets: ticketData, // Kembalikan data tiket yang dibuat
+      });
+    } catch (error: any) {
+      console.error("Error caught in createTicket:", error);
+      res
+        .status(500)
+        .json({ message: "Internal server error", error: error.message });
     }
   }
 }
