@@ -30,7 +30,6 @@ model User {
   referral_id   Int?
   points        Int           @default(0)
   avatar        String?
-  Payment       Payment[]
 }
 
 model Event {
@@ -67,33 +66,37 @@ model Ticket {
   OrderDetail OrderDetail[]
 }
 
-model OrderDetail {
-  order_id    Int           @id @default(autoincrement())
-  qty         Int
-  ticketId    Ticket        @relation(fields: [ticket_id], references: [ticket_id])
-  ticket_id   Int
-  Transaction Transaction[]
-}
-
 model Transaction {
   transaction_id  Int           @id @default(autoincrement())
   user            User          @relation(fields: [user_id], references: [user_id])
-  totalPrice      Float
-  paymentMethod   PaymentMethod
+  totalPrice      Int
+  finalPrice      Int?
   referralUsed    Boolean       @default(false)
   discount        Coupon?       @relation(fields: [coupon_Id], references: [coupon_id])
   transactionDate DateTime      @default(now())
-  payment         Payment?
+  paymentStatus   PaymentStatus @default(PENDING)
   createdAt       DateTime      @default(now())
   user_id         Int
-  orderDetail     OrderDetail   @relation(fields: [orderDetail_id], references: [order_id])
-  coupon_Id       Int?
-  orderDetail_id  Int
+
+  coupon_Id   Int?
+  expiredAt   DateTime?
+  OrderDetail OrderDetail[]
+}
+
+model OrderDetail {
+  order_id    Int
+  ticket_id   Int
+  qty         Int
+  subtotal    Int?
+  ticketId    Ticket      @relation(fields: [ticket_id], references: [ticket_id])
+  transaction Transaction @relation(fields: [order_id], references: [transaction_id])
+
+  @@id([order_id, ticket_id])
 }
 
 model Coupon {
   coupon_id      Int           @id @default(autoincrement())
-  discountAmount Float         @default(0.0)
+  discountAmount Int
   used           Boolean
   expiresAt      DateTime
   Transaction    Transaction[]
@@ -110,17 +113,14 @@ model ReferralLog {
 }
 
 model Payment {
-  payment_id     Int           @id @default(autoincrement())
-  transaction    Transaction   @relation(fields: [transaction_id], references: [transaction_id])
-  paymentMethod  PaymentMethod
-  paymentStatus  PaymentStatus @default(PENDING)
+  payment_id Int @id @default(autoincrement())
+
   amount         Int
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  transaction_id Int           @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  transaction_id Int      @unique
   expierdAt      DateTime
   redirect_url   String?
-  user           User          @relation(fields: [user_id], references: [user_id])
   user_id        Int
 }
 
@@ -157,12 +157,6 @@ enum PaymentStatus {
   PENDING
   COMPLETED
   FAILED
-}
-
-enum PaymentMethod {
-  CREDIT_CARD
-  BANK_TRANSFER
-  EWALLET
 }
 
 enum TicketType {

@@ -84,7 +84,7 @@ export class EventController {
     const { title, description, location, startTime, endTime, category } =
       req.body;
 
-    const userId = Number(req.params.user_id);
+    const userId = Number(req.user?.user_id);
 
     try {
       // Validasi user
@@ -148,49 +148,49 @@ export class EventController {
         .json({ message: "Internal server error", error: error.message });
     }
   }
+
   async createTicket(req: Request, res: Response): Promise<void> {
-    const eventId = Number(req.params.event_id);
-    const { tickets } = req.body;
-
     try {
-      // Validasi event apakah ada
-      const event = await prisma.event.findUnique({
-        where: { event_id: eventId },
-      });
-      if (!event) {
-        res.status(404).json({ message: "Event not found" });
-        return;
-      }
+      const { eventId } = req.params;
+      const { tickets } = req.body;
 
-      // Validasi tiket
+      // Pastikan ada tiket yang dikirimkan
       if (!tickets || tickets.length === 0) {
-        res.status(400).json({ message: "At least one ticket is required" });
+        res.status(400).json({
+          message: "At least one ticket is required",
+        });
+        return; // Jangan lanjutkan eksekusi
+      }
+
+      // Konversi eventId menjadi number
+      const parsedEventId = parseInt(eventId, 10);
+      if (isNaN(parsedEventId)) {
+        res.status(400).json({
+          message: "Invalid eventId. It must be a number.",
+        });
         return;
       }
 
-      // Validasi dan persiapkan data tiket
+      // Proses pembuatan tiket
       const ticketData = tickets.map((ticket: any) => ({
         type: ticket.type,
         price: ticket.price,
         seats: ticket.seats,
         lastOrder: new Date(ticket.lastOrder),
-        event_id: eventId, // Relasikan dengan event_id yang sudah ada
+        event_id: parsedEventId, // Pastikan ini bertipe number
       }));
 
-      // Validasi format lastOrder untuk setiap tiket
-
-      // Simpan tiket
+      // Simpan tiket ke database
       await prisma.ticket.createMany({ data: ticketData });
 
       res.status(201).json({
         message: "Tickets created successfully",
-        tickets: ticketData, // Kembalikan data tiket yang dibuat
       });
-    } catch (error: any) {
-      console.error("Error caught in createTicket:", error);
-      res
-        .status(500)
-        .json({ message: "Internal server error", error: error.message });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: "Error creating tickets",
+      });
     }
   }
 }
