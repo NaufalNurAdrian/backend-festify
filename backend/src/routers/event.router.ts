@@ -17,14 +17,16 @@ export class EventRouter {
     this.router.get("/", this.eventController.getEventId);
 
     this.router.post(
-      "/create/:user_id",
+      "/create/",
+      verifyToken,
 
       uploader("memoryStorage", "event_").single("thumbnail"),
       this.eventController.createEvent
     );
 
     this.router.post(
-      "/create/ticket/:event_id",
+      "/create/ticket/:eventId",
+      verifyToken,
       this.eventController.createTicket
     );
     this.router.get("/:slug", this.eventController.getEventSlug);
