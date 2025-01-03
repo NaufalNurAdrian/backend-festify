@@ -66,6 +66,7 @@ export class EventController {
           },
           Ticket: {
             select: {
+              ticket_id: true,
               type: true,
               price: true,
               seats: true,
@@ -173,6 +174,7 @@ export class EventController {
 
       // Proses pembuatan tiket
       const ticketData = tickets.map((ticket: any) => ({
+        ticket_id: ticket.ticket_id,
         type: ticket.type,
         price: ticket.price,
         seats: ticket.seats,
