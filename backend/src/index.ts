@@ -8,8 +8,8 @@ import { EventRouter } from "./routers/event.router";
 
 import { TicketRouter } from "./routers/ticket.router";
 
-// import { DashboardRouter } from "./routers/dashboard.router";
-import { TransactionRouter } from "./routers/order.router";
+import { DashboardRouter } from "./routers/dashboard.router";
+// import { TransactionRouter } from "./routers/order.router";
 
 const PORT: number = 8000;
 
@@ -32,15 +32,15 @@ const authRouter = new AuthRouter();
 const userRouter = new UserRouter();
 const eventsRouter = new EventRouter();
 const ticketRouter = new TicketRouter();
-const transactionRouter = new TransactionRouter();
-// const dashboardRouter = new DashboardRouter();
+// const transactionRouter = new TransactionRouter();
+const dashboardRouter = new DashboardRouter();
 
 app.use("/api/auth", authRouter.getRouter());
 app.use("/api/users", userRouter.getRouter());
 app.use("/api/event", eventsRouter.getRouter());
 app.use("/api/tickets", ticketRouter.getRouter());
-app.use("/api/transactions", transactionRouter.getRouter());
-// app.use("/api/dashboard", dashboardRouter.getRouter());
+// app.use("/api/transactions", transactionRouter.getRouter());
+app.use("/api/dashboard", dashboardRouter.getRouter());
 
 app.listen(PORT, () => {
   console.log(`server running on -> http://localhost:${PORT}/api`);
