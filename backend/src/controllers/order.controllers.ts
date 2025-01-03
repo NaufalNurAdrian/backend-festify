@@ -10,7 +10,7 @@ export class TransactionController {
     try {
       const userId = req.user?.user_id;
       const { totalPrice, finalPrice, OrderDetail } = req.body;
-      const expiredAt = new Date(new Date().getTime() + 3 * 60000);
+      const expiredAt = new Date(new Date().getTime() + 15 * 60000);
 
       const transactionId = await prisma.$transaction(async (prisma) => {
         // Membuat transaksi baru
@@ -178,7 +178,7 @@ export class TransactionController {
         item_details,
         expiry: {
           unit: "minutes",
-          duration: 3,
+          duration: 15,
         },
       };
       console.log("parame:", parameters);

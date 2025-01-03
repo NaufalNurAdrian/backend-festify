@@ -5,7 +5,7 @@ export class DashboardController {
   async getEventActive(req: Request, res: Response) {
     try {
       // Ambil user_id dari parameter URL
-      const userId = req.user?.user_id
+      const userId = req.user?.user_id;
 
       if (!userId) {
         res.status(400).send({ error: "Invalid user ID" });
@@ -21,7 +21,7 @@ export class DashboardController {
 
       // Kirim response hanya sekali
       res.status(200).send({
-        activeEvent
+        activeEvent,
       });
     } catch (error) {
       console.error("Error fetching dashboard stats: ", error);
@@ -31,7 +31,7 @@ export class DashboardController {
   async getEventDeactive(req: Request, res: Response) {
     try {
       // Ambil user_id dari parameter URL
-      const userId = req.user?.user_id
+      const userId = req.user?.user_id;
 
       if (!userId) {
         res.status(400).send({ error: "Invalid user ID" });
@@ -47,7 +47,7 @@ export class DashboardController {
 
       // Kirim response hanya sekali
       res.status(200).send({
-        deactiveEvent
+        deactiveEvent,
       });
     } catch (error) {
       console.error("Error fetching dashboard stats: ", error);
@@ -56,7 +56,7 @@ export class DashboardController {
   }
   async getTotalTransaction(req: Request, res: Response) {
     try {
-      const userId = req.user?.user_id
+      const userId = req.user?.user_id;
 
       if (!userId) {
         res.status(400).send({ error: "Invalid user ID" });
@@ -64,7 +64,7 @@ export class DashboardController {
 
       const totalTransaction = await prisma.transaction.aggregate({
         _sum: {
-          finalPrice: true
+          finalPrice: true,
         },
         where: {
           user_id: userId,
@@ -73,8 +73,7 @@ export class DashboardController {
       });
 
       res.status(200).send({
-        totalTransaction: totalTransaction._sum.finalPrice
-
+        totalTransaction: totalTransaction._sum.finalPrice,
       });
     } catch (error) {
       console.error("Error fetching dashboard stats: ", error);
@@ -85,11 +84,11 @@ export class DashboardController {
   async getIncomePerday(req: Request, res: Response) {
     try {
       const userId = req.user?.user_id;
-  
+
       if (!userId) {
-         res.status(401).send({ message: "Unauthorized: user not logged in" });
+        res.status(401).send({ message: "Unauthorized: user not logged in" });
       }
-  
+
       // Fetch all transactions with completed payment status
       const transactions = await prisma.transaction.findMany({
         where: {
@@ -104,7 +103,7 @@ export class DashboardController {
           createdAt: "asc",
         },
       });
-  
+
       // Group by date (manual aggregation)
       const incomePerDay = transactions.reduce((acc, transaction) => {
         const date = transaction.createdAt.toISOString().split("T")[0]; // Extract date part only
@@ -114,21 +113,23 @@ export class DashboardController {
         acc[date] += transaction.finalPrice || 0; // Sum finalPrice
         return acc;
       }, {} as Record<string, number>);
-  
+
       // Format the result
-      const formattedData = Object.entries(incomePerDay).map(([date, totalIncome]) => ({
-        date,
-        totalIncome,
-      }));
-  
+      const formattedData = Object.entries(incomePerDay).map(
+        ([date, totalIncome]) => ({
+          date,
+          totalIncome,
+        })
+      );
+
       res.status(200).send({ incomePerDay: formattedData });
     } catch (error) {
       console.error("Error fetching income per day: ", error);
       res.status(500).send({ message: "Internal Server Error" });
     }
   }
-  
-   async getIncomePerMonth(req: Request, res: Response) {
+
+  async getIncomePerMonth(req: Request, res: Response) {
     try {
       const userId = req.user?.user_id;
 
@@ -159,10 +160,12 @@ export class DashboardController {
         return acc;
       }, {} as Record<string, number>);
 
-      const formattedIncome = Object.entries(incomePerMonth).map(([month, totalIncome]) => ({
-        month,
-        totalIncome,
-      }));
+      const formattedIncome = Object.entries(incomePerMonth).map(
+        ([month, totalIncome]) => ({
+          month,
+          totalIncome,
+        })
+      );
 
       res.status(200).send({ incomePerMonth: formattedIncome });
     } catch (error) {
@@ -203,10 +206,12 @@ export class DashboardController {
         return acc;
       }, {} as Record<string, number>);
 
-      const formattedIncome = Object.entries(incomePerYear).map(([year, totalIncome]) => ({
-        year,
-        totalIncome,
-      }));
+      const formattedIncome = Object.entries(incomePerYear).map(
+        ([year, totalIncome]) => ({
+          year,
+          totalIncome,
+        })
+      );
 
       res.status(200).send({ incomePerYear: formattedIncome });
     } catch (error) {
@@ -214,5 +219,4 @@ export class DashboardController {
       res.status(500).send({ message: "Internal Server Error" });
     }
   }
-
 }
