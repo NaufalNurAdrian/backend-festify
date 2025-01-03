@@ -9,8 +9,8 @@ export class TransactionController {
   async createTransaction(req: Request<{}, {}, requestBody>, res: Response) {
     try {
       const userId = req.user?.user_id;
-      const { totalPrice, finalPrice, ticketCart } = req.body;
-      const expiredAt = new Date(new Date().getTime() + 30 * 60000);
+      const { totalPrice, finalPrice, OrderDetail } = req.body;
+      const expiredAt = new Date(new Date().getTime() + 3 * 60000);
 
       const transactionId = await prisma.$transaction(async (prisma) => {
         // Membuat transaksi baru
@@ -18,9 +18,9 @@ export class TransactionController {
           data: { user_id: userId!, totalPrice, finalPrice, expiredAt },
         });
 
-        // Proses tiap item dalam ticketCart
+        // Proses tiap item dalam orderDetail
         await Promise.all(
-          ticketCart.map(async (item) => {
+          OrderDetail.map(async (item) => {
             // Pastikan item.ticketId ada dan memiliki ticket_id yang valid
             if (!item.ticketId || !item.ticketId.ticket_id) {
               throw new Error(
@@ -64,7 +64,7 @@ export class TransactionController {
           })
         );
 
-        console.log(ticketCart);
+        console.log(OrderDetail);
         return transaction_id;
       });
 
@@ -156,7 +156,9 @@ export class TransactionController {
         where: { user_id: req.user?.user_id },
       });
 
-      const uniqueOrderId = `${order_id}-${Date.now()}`;
+      const uniqueOrderId = `${order_id}${Math.floor(Math.random() * 1000000)}`;
+      console.log("unikorderID: ", uniqueOrderId);
+
       const snap = new midtransClient.Snap({
         isProduction: false,
         serverKey: process.env.MID_SERVER_KEY,
@@ -164,7 +166,7 @@ export class TransactionController {
 
       const parameters = {
         transaction_details: {
-          order_id: uniqueOrderId,
+          order_id: uniqueOrderId.toString(),
           gross_amount: transaction.finalPrice,
         },
         customer_details: {
@@ -193,6 +195,7 @@ export class TransactionController {
   async midtransWebhook(req: Request, res: Response) {
     try {
       const { transaction_status, order_id } = req.body;
+      console.log("orderId:", +order_id);
 
       const newStatus =
         transaction_status === "settlement"
