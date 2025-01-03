@@ -112,17 +112,6 @@ model ReferralLog {
   User          User[]
 }
 
-model Payment {
-  payment_id     Int      @id @default(autoincrement())
-  amount         Int
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  transaction_id Int      @unique
-  expierdAt      DateTime
-  redirect_url   String?
-  user_id        Int
-}
-
 model Promotion {
   promotion_id Int      @id @default(autoincrement())
   code         String   @unique
