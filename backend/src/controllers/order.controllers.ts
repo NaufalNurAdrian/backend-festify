@@ -49,7 +49,7 @@ export class TransactionController {
             // Membuat orderDetail baru
             await prisma.orderDetail.create({
               data: {
-                order_id: transaction_id,
+                orderId: transaction_id,
                 ticket_id: item.ticketId.ticket_id, // Pastikan ini adalah ID yang valid
                 qty: item.qty,
                 subtotal: item.qty * item.ticketId.price,
@@ -70,7 +70,7 @@ export class TransactionController {
 
       res
         .status(200)
-        .send({ message: "Transaction created", order_id: transactionId });
+        .send({ message: "Transaction created", orderId: transactionId });
     } catch (err) {
       console.log(err);
       res
@@ -123,11 +123,11 @@ export class TransactionController {
   // Mendapatkan token Midtrans Snap
   async getSnapToken(req: Request, res: Response) {
     try {
-      const { order_id } = req.body;
+      const { orderId } = req.body;
 
       // Validasi transaksi
       const transaction = await prisma.transaction.findUnique({
-        where: { transaction_id: order_id },
+        where: { transaction_id: orderId },
       });
       if (!transaction) throw new Error("Transaction not found");
 
@@ -140,7 +140,7 @@ export class TransactionController {
 
       const item_details = await prisma.orderDetail
         .findMany({
-          where: { order_id },
+          where: { orderId: orderId },
           include: { ticketId: { select: { type: true } } },
         })
         .then((details) =>
@@ -151,13 +151,14 @@ export class TransactionController {
             name: detail.ticketId.type,
           }))
         );
+      console.log("detailItem:", item_details);
 
       const user = await prisma.user.findUnique({
         where: { user_id: req.user?.user_id },
       });
 
-      const uniqueOrderId = `${order_id}${Math.floor(Math.random() * 1000000)}`;
-      console.log("unikorderID: ", uniqueOrderId);
+      //   const uniqueOrderId = `${order_id}${Math.floor(Math.random() * 1000000)}`;
+      //   console.log("unikorderID: ", uniqueOrderId);
 
       const snap = new midtransClient.Snap({
         isProduction: false,
@@ -166,7 +167,7 @@ export class TransactionController {
 
       const parameters = {
         transaction_details: {
-          order_id: uniqueOrderId.toString(),
+          order_id: orderId.toString(),
           gross_amount: transaction.finalPrice,
         },
         customer_details: {
@@ -177,11 +178,12 @@ export class TransactionController {
         item_details,
         expiry: {
           unit: "minutes",
-          duration: 30,
+          duration: 3,
         },
       };
-
+      console.log("parame:", parameters);
       const snapTransaction = await snap.createTransaction(parameters);
+      console.log("snapTransaction:", snapTransaction);
       res.status(200).send({ result: snapTransaction.token });
     } catch (err) {
       console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
@@ -206,7 +208,7 @@ export class TransactionController {
 
       if (newStatus === "FAILED") {
         const orderDetails = await prisma.orderDetail.findMany({
-          where: { order_id: +order_id },
+          where: { orderId: +order_id },
           select: { qty: true, ticket_id: true },
         });
 
@@ -220,10 +222,12 @@ export class TransactionController {
 
       await prisma.transaction.update({
         where: { transaction_id: +order_id },
-        data: { paymentStatus: newStatus },
+        data: {
+          paymentStatus: newStatus,
+        },
       });
 
-      res.status(200).send({ message: "Status transaksi berhasil diperbarui" });
+      res.status(200).send({ message: "Success" });
     } catch (err) {
       console.error(err);
       res.status(400).send({ message: "Terjadi kesalahan", error: err });

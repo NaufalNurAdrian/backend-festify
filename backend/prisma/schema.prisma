@@ -84,14 +84,14 @@ model Transaction {
 }
 
 model OrderDetail {
-  order_id    Int
+  orderId     Int
   ticket_id   Int
   qty         Int
   subtotal    Int?
-  ticketId    Ticket      @relation(fields: [ticket_id], references: [ticket_id])
-  transaction Transaction @relation(fields: [order_id], references: [transaction_id])
+  ticketId    Ticket       @relation(fields: [ticket_id], references: [ticket_id])
+  transaction Transaction? @relation(fields: [orderId], references: [transaction_id])
 
-  @@id([order_id, ticket_id])
+  @@id([orderId, ticket_id])
 }
 
 model Coupon {
@@ -113,8 +113,7 @@ model ReferralLog {
 }
 
 model Payment {
-  payment_id Int @id @default(autoincrement())
-
+  payment_id     Int      @id @default(autoincrement())
   amount         Int
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
