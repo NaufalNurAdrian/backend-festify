@@ -15,7 +15,7 @@ export class EventController {
       const events = await prisma.event.findMany({
         where: {
           ...filter,
-          status : "ACTIVE"
+          status: "ACTIVE",
         },
         select: {
           event_id: true,
@@ -46,7 +46,7 @@ export class EventController {
       res.status(400).send({ message: "Events Not Found" });
     }
   }
-  
+
   async getEventCompleted(req: Request, res: Response) {
     try {
       const { search } = req.query;
@@ -57,7 +57,7 @@ export class EventController {
       const events = await prisma.event.findMany({
         where: {
           ...filter,
-          status : "COMPLETED"
+          status: "COMPLETED",
         },
         select: {
           event_id: true,
@@ -87,7 +87,7 @@ export class EventController {
       res.status(400).send({ message: "Events Not Found" });
     }
   }
-  
+
   async getEventSlug(req: Request, res: Response) {
     try {
       const { slug } = req.params;

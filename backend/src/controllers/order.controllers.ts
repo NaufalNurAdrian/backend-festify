@@ -174,7 +174,16 @@ export class TransactionController {
       });
 
       if (!coupon) throw new Error("Coupon not found");
-      if (coupon.used) throw new Error("Coupon has already been used");
+
+      if (coupon.used) {
+        // Jika kupon sudah terpakai, tidak menghitung diskon
+        res.status(400).send({
+          message: "Coupon has already been used. No discount applied.",
+          finalPrice: transaction.totalPrice, // Harga tetap tanpa diskon
+        });
+        return;
+      }
+
       if (coupon.expiresAt < new Date()) throw new Error("Coupon has expired");
 
       // Calculate the discount based on percentage
@@ -194,7 +203,9 @@ export class TransactionController {
         });
       });
 
-      res.status(200).send({ message: "Coupon applied successfully" });
+      res
+        .status(200)
+        .send({ message: "Coupon applied successfully", finalPrice });
     } catch (err) {
       console.error((err as Error).message);
       res.status(400).send({
@@ -227,6 +238,7 @@ export class TransactionController {
                 select: {
                   discountAmount: true, // Assuming this is percentage-based
                   expiresAt: true,
+                  used: true, // Tambahkan properti 'used'
                 },
               },
             },
@@ -242,9 +254,14 @@ export class TransactionController {
         );
       }
 
-      // Hitung harga akhir transaksi dengan memperhitungkan diskon jika ada
-      const discount = transaction.user?.coupon?.discountAmount || 0;
-      const discountAmount = (transaction.totalPrice * discount) / 100; // Apply percentage discount
+      // Logika untuk diskon hanya jika kupon valid dan belum digunakan
+      const coupon = transaction.user?.coupon;
+      let discountAmount = 0;
+
+      if (coupon && !coupon.used && coupon.expiresAt > new Date()) {
+        discountAmount = (transaction.totalPrice * coupon.discountAmount) / 100; // Diskon persentase
+      }
+
       const finalPrice =
         transaction.OrderDetail.reduce(
           (total, detail) => total + detail.subtotal!,
