@@ -22,6 +22,7 @@ export class EventController {
           title: true,
           description: true,
           location: true,
+          category: true,
           startTime: true,
           endTime: true,
           slug: true,

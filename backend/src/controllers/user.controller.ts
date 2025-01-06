@@ -140,37 +140,34 @@ export class UserController {
         where: {
           transaction: {
             user_id: userId,
-            paymentStatus: "COMPLETED"
+            paymentStatus: "COMPLETED",
           },
         },
         select: {
           orderId: true,
           subtotal: true,
           qty: true,
-          transaction : {
+          transaction: {
             select: {
-              finalPrice : true,
+              finalPrice: true,
               transactionDate: true,
-              expiredAt : true,
-
-            }
+              expiredAt: true,
+            },
           },
-          ticketId : {
-            select : {
-              event : {
-                select : {
-                  title : true, 
+          ticketId: {
+            select: {
+              event: {
+                select: {
+                  title: true,
                   location: true,
                   startTime: true,
                   endTime: true,
-                }
+                },
               },
-              type : true
-            }
-          }
-          
-        }
-        
+              type: true,
+            },
+          },
+        },
       });
 
       res.status(200).send({ message: "get ticket successfully", tickets });
@@ -188,25 +185,23 @@ export class UserController {
 
       const coupon = await prisma.coupon.findFirst({
         where: {
-          User : {
-            every:{
-              user_id : userId
-            }
+          User: {
+            every: {
+              user_id: userId,
+            },
           },
-          used: false
+          used: false,
         },
         select: {
           discountAmount: true,
-          expiresAt: true
-        }
-      })
+          expiresAt: true,
+        },
+      });
 
-      res.status(200).send({coupon})
-
+      res.status(200).send({ coupon });
     } catch (error) {
       console.log(error);
-      res.status(400).send({message: "cannot get coupon"})
+      res.status(400).send({ message: "cannot get coupon" });
     }
   }
-  
 }

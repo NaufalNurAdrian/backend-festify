@@ -31,6 +31,13 @@ export class TransactionRouter {
       "/:transaction_id",
       this.transactionController.getTransactionId
     );
+
+    // Tambahkan route untuk applyCoupon
+    this.router.post(
+      "/applyCoupon",
+      verifyToken,
+      this.transactionController.applyCoupon
+    );
   }
 
   getRouter(): Router {
