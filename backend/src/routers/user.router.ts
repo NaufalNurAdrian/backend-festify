@@ -15,6 +15,7 @@ export class UserRouter {
 
   private initializeRoutes() {
     this.router.get("/profile", verifyToken, this.userController.getUserId);
+    this.router.get("/profle/coupon", this.userController.getCouponDetails);
     this.router.patch(
       "/avatar",
       verifyToken,
