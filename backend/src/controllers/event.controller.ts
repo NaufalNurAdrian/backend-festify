@@ -34,6 +34,50 @@ export class EventController {
           },
           organizer: {
             select: {
+              user_id: true,
+              username: true,
+              avatar: true,
+            },
+          },
+        },
+      });
+      res.status(200).send({ events });
+    } catch (err) {
+      console.log(err);
+      res.status(400).send({ message: "Events Not Found" });
+    }
+  }
+  async getEventUser(req: Request, res: Response) {
+    try {
+
+      const userId = req.user?.user_id;
+      if (!userId) {
+        res.status(401).send({ message: "Unauthorized, login first" });
+      }
+
+      const events = await prisma.event.findMany({
+        where: {
+          status : "ACTIVE",
+          user_id: userId
+        },
+        select: {
+          event_id: true,
+          title: true,
+          description: true,
+          location: true,
+          category: true,
+          startTime: true,
+          endTime: true,
+          slug: true,
+          thumbnail: true,
+          Ticket: {
+            select: {
+              price: true,
+            },
+          },
+          organizer: {
+            select: {
+              user_id: true,
               username: true,
               avatar: true,
             },
@@ -49,15 +93,14 @@ export class EventController {
   
   async getEventCompleted(req: Request, res: Response) {
     try {
-      const { search } = req.query;
-      const filter: Prisma.EventWhereInput = {};
-      if (search) {
-        filter.title = { contains: search as string, mode: "insensitive" };
+      const userId = req.user?.user_id;
+      if (!userId) {
+        res.status(401).send({ message: "Unauthorized, login first" });
       }
       const events = await prisma.event.findMany({
         where: {
-          ...filter,
-          status : "COMPLETED"
+          status : "COMPLETED",
+          user_id: userId
         },
         select: {
           event_id: true,

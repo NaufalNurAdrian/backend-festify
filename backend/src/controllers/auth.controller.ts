@@ -71,12 +71,12 @@ export class AuthController {
       // Kirim email verifikasi
       const payload = { user_id: newUser.user_id };
       const token = sign(payload, process.env.JWT_KEY!, { expiresIn: "10m" });
-      const link = `http://localhost:3000/verify/${token}`;
+      const link = `${process.env.BASE_URL_FE}/verify/${token}`;
 
       const templatePath = path.join(__dirname, "../templates", "verify.hbs");
       const templateSource = fs.readFileSync(templatePath, "utf-8");
       const compiledTemplate = handlebars.compile(templateSource);
-      const html = compiledTemplate({ username, link });
+      const html = compiledTemplate({ username, link, referralCode: newUserData.referralCode });
 
       await transporter.sendMail({
         from: "nuradriannaufal@gmail.com",

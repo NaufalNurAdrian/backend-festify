@@ -15,7 +15,7 @@ export class DashboardRouter {
     this.router.get(
       "/payments/total-income/day",
       verifyToken,
-      this.dashboardControlller.getIncomePerday
+      this.dashboardControlller.getIncomePerDay
     );
     this.router.get(
       "/payments/total-income/month",
