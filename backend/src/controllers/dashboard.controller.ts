@@ -57,12 +57,13 @@ export class DashboardController {
   async getTotalTransaction(req: Request, res: Response) {
     try {
       const userId = req.user?.user_id;
-
+  
       if (!userId) {
         res.status(400).send({ error: "Invalid user ID" });
       }
-
-      const totalTransaction = await prisma.transaction.aggregate({
+  
+      // Total transaksi dari transaksi yang dilakukan oleh userId sendiri
+      const userOwnTransactions = await prisma.transaction.aggregate({
         _sum: {
           finalPrice: true,
         },
@@ -71,29 +72,70 @@ export class DashboardController {
           paymentStatus: "COMPLETED",
         },
       });
-
+  
+      // Total transaksi dari transaksi pengguna lain yang membeli tiket event userId
+      const eventTransactions = await prisma.transaction.aggregate({
+        _sum: {
+          finalPrice: true,
+        },
+        where: {
+          paymentStatus: "COMPLETED",
+          OrderDetail: {
+            some: {
+              ticketId: {
+                event: {
+                  organizer: {
+                    user_id: userId,
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+  
+      // Hitung total transaksi dari kedua sumber
+      const totalTransaction =
+        (userOwnTransactions._sum?.finalPrice || 0) +
+        (eventTransactions._sum?.finalPrice || 0);
+  
       res.status(200).send({
-        totalTransaction: totalTransaction._sum.finalPrice,
+        totalTransaction,
       });
     } catch (error) {
-      console.error("Error fetching dashboard stats: ", error);
+      console.error("Error fetching total transaction: ", error);
       res.status(500).send({ message: "Internal Server Error" });
     }
   }
+  
 
-  async getIncomePerday(req: Request, res: Response) {
+  async getIncomePerDay(req: Request, res: Response) {
     try {
       const userId = req.user?.user_id;
-
+  
       if (!userId) {
         res.status(401).send({ message: "Unauthorized: user not logged in" });
       }
-
-      // Fetch all transactions with completed payment status
+  
       const transactions = await prisma.transaction.findMany({
         where: {
-          user_id: userId,
           paymentStatus: "COMPLETED",
+          OR: [
+            { user_id: userId }, // Pendapatan dari transaksi user sendiri
+            { 
+              OrderDetail: {
+                some: {
+                  ticketId: {
+                    event: {
+                      organizer: {
+                        user_id: userId, // Pendapatan dari event milik user
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
         },
         select: {
           createdAt: true,
@@ -103,44 +145,55 @@ export class DashboardController {
           createdAt: "asc",
         },
       });
-
-      // Group by date (manual aggregation)
+  
       const incomePerDay = transactions.reduce((acc, transaction) => {
-        const date = transaction.createdAt.toISOString().split("T")[0]; // Extract date part only
+        const date = transaction.createdAt.toISOString().split("T")[0]; // Ambil bagian tanggal
         if (!acc[date]) {
           acc[date] = 0;
         }
-        acc[date] += transaction.finalPrice || 0; // Sum finalPrice
+        acc[date] += transaction.finalPrice || 0; // Tambahkan finalPrice
         return acc;
       }, {} as Record<string, number>);
-
-      // Format the result
-      const formattedData = Object.entries(incomePerDay).map(
-        ([date, totalIncome]) => ({
-          date,
-          totalIncome,
-        })
-      );
-
+  
+      const formattedData = Object.entries(incomePerDay).map(([date, totalIncome]) => ({
+        date,
+        totalIncome,
+      }));
+  
       res.status(200).send({ incomePerDay: formattedData });
     } catch (error) {
       console.error("Error fetching income per day: ", error);
       res.status(500).send({ message: "Internal Server Error" });
     }
   }
-
+  
   async getIncomePerMonth(req: Request, res: Response) {
     try {
       const userId = req.user?.user_id;
-
+  
       if (!userId) {
         res.status(401).send({ message: "Unauthorized: user not logged in" });
       }
-
+  
       const transactions = await prisma.transaction.findMany({
         where: {
-          user_id: userId,
           paymentStatus: "COMPLETED",
+          OR: [
+            { user_id: userId },
+            { 
+              OrderDetail: {
+                some: {
+                  ticketId: {
+                    event: {
+                      organizer: {
+                        user_id: userId,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
         },
         select: {
           createdAt: true,
@@ -150,43 +203,55 @@ export class DashboardController {
           createdAt: "asc",
         },
       });
-
+  
       const incomePerMonth = transactions.reduce((acc, transaction) => {
-        const month = transaction.createdAt.toISOString().slice(0, 7); // Format: YYYY-MM
+        const month = transaction.createdAt.toISOString().slice(0, 7); // Format YYYY-MM
         if (!acc[month]) {
           acc[month] = 0;
         }
-        acc[month] += transaction.finalPrice || 0; // Sum finalPrice
+        acc[month] += transaction.finalPrice || 0;
         return acc;
       }, {} as Record<string, number>);
-
-      const formattedIncome = Object.entries(incomePerMonth).map(
-        ([month, totalIncome]) => ({
-          month,
-          totalIncome,
-        })
-      );
-
+  
+      const formattedIncome = Object.entries(incomePerMonth).map(([month, totalIncome]) => ({
+        month,
+        totalIncome,
+      }));
+  
       res.status(200).send({ incomePerMonth: formattedIncome });
     } catch (error) {
       console.error("Error fetching income per month: ", error);
       res.status(500).send({ message: "Internal Server Error" });
     }
   }
-
-  // Get income per year
+  
   async getIncomePerYear(req: Request, res: Response) {
     try {
       const userId = req.user?.user_id;
-
+  
       if (!userId) {
         res.status(401).send({ message: "Unauthorized: user not logged in" });
       }
-
+  
       const transactions = await prisma.transaction.findMany({
         where: {
-          user_id: userId,
           paymentStatus: "COMPLETED",
+          OR: [
+            { user_id: userId },
+            { 
+              OrderDetail: {
+                some: {
+                  ticketId: {
+                    event: {
+                      organizer: {
+                        user_id: userId,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
         },
         select: {
           createdAt: true,
@@ -196,27 +261,26 @@ export class DashboardController {
           createdAt: "asc",
         },
       });
-
+  
       const incomePerYear = transactions.reduce((acc, transaction) => {
-        const year = transaction.createdAt.toISOString().slice(0, 4); // Format: YYYY
+        const year = transaction.createdAt.toISOString().slice(0, 4); // Format YYYY
         if (!acc[year]) {
           acc[year] = 0;
         }
-        acc[year] += transaction.finalPrice || 0; // Sum finalPrice
+        acc[year] += transaction.finalPrice || 0;
         return acc;
       }, {} as Record<string, number>);
-
-      const formattedIncome = Object.entries(incomePerYear).map(
-        ([year, totalIncome]) => ({
-          year,
-          totalIncome,
-        })
-      );
-
+  
+      const formattedIncome = Object.entries(incomePerYear).map(([year, totalIncome]) => ({
+        year,
+        totalIncome,
+      }));
+  
       res.status(200).send({ incomePerYear: formattedIncome });
     } catch (error) {
       console.error("Error fetching income per year: ", error);
       res.status(500).send({ message: "Internal Server Error" });
     }
   }
+  
 }

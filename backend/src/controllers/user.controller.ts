@@ -75,7 +75,7 @@ export class UserController {
 
       const payload = { user_id: user!.user_id, email: user!.email };
       const token = sign(payload, process.env.JWT_KEY!, { expiresIn: "1h" }); // Masa berlaku 1 jam
-      const link = `http://localhost:3000/reset-password/${token}`; // Ubah link menjadi reset-password
+      const link = `${process.env.BASE_URL_FE}/reset-password/${token}`; // Ubah link menjadi reset-password
 
       // Path template email
       const templatePath = path.join(
@@ -92,7 +92,7 @@ export class UserController {
       // Kirim email
       await transporter.sendMail({
         from: "nuradriannaufal@gmail.com",
-        to: user!.email, // Pastikan menggunakan user.email
+        to: user!.email, 
         subject: "Forgot Password Request",
         html,
       });

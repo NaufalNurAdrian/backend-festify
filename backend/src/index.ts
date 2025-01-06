@@ -1,7 +1,8 @@
+import dotenv from "dotenv"
+dotenv.config()
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import { AuthRouter } from "./routers/auth.router";
-import path from "path";
 import cookieParser from "cookie-parser";
 import { UserRouter } from "./routers/user.router";
 import { EventRouter } from "./routers/event.router";
@@ -17,7 +18,7 @@ const app: Application = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: `${process.env.BASE_URL_FE}`,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   })
