@@ -25,11 +25,3 @@ export const verifyToken = async (
     res.status(400).send(err);
   }
 };
-
-export const checkAdmin = (req: Request, res: Response, next: NextFunction) => {
-  if (req.user?.role == "ORGANIZER") {
-    next();
-  } else {
-    res.status(400).send({ message: "Unauthorize, Admin only!" });
-  }
-};
