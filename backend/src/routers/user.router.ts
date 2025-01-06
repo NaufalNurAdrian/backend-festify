@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { UserController } from "../controllers/user.controller";
-import { checkAdmin, verifyToken } from "../middleware/verify";
+import { verifyToken } from "../middleware/verify";
 import { uploader } from "../services/uploader";
 
 export class UserRouter {
@@ -15,7 +15,8 @@ export class UserRouter {
 
   private initializeRoutes() {
     this.router.get("/profile", verifyToken, this.userController.getUserId);
-    this.router.get("/profle/coupon", this.userController.getCouponDetails);
+    this.router.get("/ticket", verifyToken, this.userController.getTicket);
+    this.router.get("/coupon", verifyToken, this.userController.getCoupon);
     this.router.patch(
       "/avatar",
       verifyToken,
@@ -24,10 +25,7 @@ export class UserRouter {
     );
     this.router.post("/verify-forgot", this.userController.verifyForgotPass);
 
-    this.router.patch(
-      "/forgot-password/:token",
-      this.userController.editPassword
-    );
+    this.router.patch("/forgot-password", this.userController.editPassword);
     this.router.patch("/:id", this.userController.editUser);
     this.router.delete("/:id", this.userController.deleteUser);
   }

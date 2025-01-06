@@ -106,8 +106,7 @@ export class UserController {
 
   async editPassword(req: Request, res: Response) {
     try {
-      const { token } = req.params;
-      const { newPassword } = req.body;
+      const { token, newPassword } = req.body;
 
       // Verifikasi token JWT
       const verifiedUser: any = verify(token, process.env.JWT_KEY!);
@@ -130,40 +129,79 @@ export class UserController {
     }
   }
 
-  async getCouponDetails(req: Request, res: Response): Promise<any> {
+  async getTicket(req: Request, res: Response) {
     try {
-      // Memastikan req.user tidak undefined
-      const userId = req.user?.user_id ?? null; // Jika req.user undefined, userId akan menjadi null
-
+      const userId = req.user?.user_id;
       if (!userId) {
-        return res.status(401).send({ message: "User not authenticated" });
+        res.status(401).send({ message: "Unauthorized, login first" });
       }
 
-      // Ambil data pengguna dari database
-      const user = await prisma.user.findUnique({
-        where: { user_id: userId },
-        include: { coupon: true },
+      const tickets = await prisma.orderDetail.findMany({
+        where: {
+          transaction: {
+            user_id: userId,
+            paymentStatus: "COMPLETED",
+          },
+        },
+        select: {
+          orderId: true,
+          subtotal: true,
+          qty: true,
+          transaction: {
+            select: {
+              finalPrice: true,
+              transactionDate: true,
+              expiredAt: true,
+            },
+          },
+          ticketId: {
+            select: {
+              event: {
+                select: {
+                  title: true,
+                  location: true,
+                  startTime: true,
+                  endTime: true,
+                },
+              },
+              type: true,
+            },
+          },
+        },
       });
 
-      if (!user) throw { message: "User not found!" };
+      res.status(200).send({ message: "get ticket successfully", tickets });
+    } catch (error) {
+      res.status(400).send({ message: "cannot get ticket" });
+    }
+  }
 
-      // Jika user tidak memiliki kupon
-      if (!user.coupon) {
-        return res
-          .status(404)
-          .send({ message: "No coupon found for this user." });
+  async getCoupon(req: Request, res: Response) {
+    try {
+      const userId = req.user?.user_id;
+      if (!userId) {
+        res.status(401).send({ message: "Unauthorized, login first" });
       }
 
-      // Kembalikan data kupon
-      const coupon = user.coupon;
-
-      res.status(200).send({
-        message: "Coupon details fetched successfully",
-        coupon,
+      const coupon = await prisma.coupon.findFirst({
+        where: {
+          User: {
+            every: {
+              user_id: userId,
+            },
+          },
+          used: false,
+        },
+        select: {
+          discountAmount: true,
+          expiresAt: true,
+        },
       });
-    } catch (err) {
-      console.log(err);
-      res.status(400).send(err);
+
+      res.status(200).send({ coupon });
+    } catch (error) {
+      console.log(error);
+      res.status(400).send({ message: "cannot get coupon" });
     }
   }
 }
