@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  user_id       Int           @id @default(autoincrement())
+  username      String
+  email         String        @unique
+  password      String
+  phone         String?
+  referralCode  String        @unique
+  referredBy_id Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  coupon        Coupon?       @relation(fields: [coupon_id], references: [coupon_id])
+  coupon_id     Int?
+  loginAttempt  Int           @default(0)
+  isVerify      Boolean       @default(false)
+  isSuspend     Boolean       @default(false)
+  refferal_id   ReferralLog?  @relation(fields: [referral_id], references: [referral_id])
+  Event         Event[]
+  Transaction   Transaction[]
+  Review        Review[]
+  referral_id   Int?
+  points        Int           @default(0)
+  avatar        String?
+}
+
+model Event {
+  event_id    Int         @id @default(autoincrement())
+  title       String
+  description String?
+  location    String
+  startTime   DateTime
+  endTime     DateTime
+  status      EventStatus @default(ACTIVE)
+  isFree      Boolean     @default(false)
+  organizer   User        @relation(fields: [user_id], references: [user_id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user_id     Int
+  thumbnail   String?     @default("https://res.cloudinary.com/dxpeofir6/image/upload/v1734167683/eventdefault_fuvrcj.webp")
+  slug        String      @unique
+  category    Category
+  Ticket      Ticket[]
+  Promotion   Promotion[]
+  Review      Review[]
+}
+
+model Ticket {
+  ticket_id   Int           @id @default(autoincrement())
+  type        TicketType
+  price       Int           @default(0)
+  seats       Int
+  event       Event         @relation(fields: [event_id], references: [event_id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  event_id    Int
+  lastOrder   DateTime
+  OrderDetail OrderDetail[]
+}
+
+model Transaction {
+  transaction_id  Int           @id @default(autoincrement())
+  user            User          @relation(fields: [user_id], references: [user_id])
+  totalPrice      Int
+  finalPrice      Int?
+  referralUsed    Boolean       @default(false)
+  discount        Coupon?       @relation(fields: [coupon_Id], references: [coupon_id])
+  transactionDate DateTime      @default(now())
+  paymentStatus   PaymentStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+  user_id         Int
+
+  coupon_Id   Int?
+  expiredAt   DateTime?
+  OrderDetail OrderDetail[]
+}
+
+model OrderDetail {
+  orderId     Int
+  ticket_id   Int
+  qty         Int
+  subtotal    Int?
+  ticketId    Ticket       @relation(fields: [ticket_id], references: [ticket_id])
+  transaction Transaction? @relation(fields: [orderId], references: [transaction_id])
+
+  @@id([orderId, ticket_id])
+}
+
+model Coupon {
+  coupon_id      Int           @id @default(autoincrement())
+  discountAmount Int
+  used           Boolean
+  expiresAt      DateTime
+  Transaction    Transaction[]
+  User           User[]
+}
+
+model ReferralLog {
+  referral_id   Int      @id @default(autoincrement())
+  pointsAwarded Int
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  used          Boolean
+  User          User[]
+}
+
+model Promotion {
+  promotion_id Int      @id @default(autoincrement())
+  code         String   @unique
+  event        Event    @relation(fields: [event_id], references: [event_id])
+  discount     Int
+  maxUsage     Int
+  currentUsage Int      @default(0)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  event_id     Int
+}
+
+model Review {
+  userId    Int
+  eventId   Int
+  event     Event    @relation(fields: [eventId], references: [event_id])
+  user      User     @relation(fields: [userId], references: [user_id])
+  rating    Int
+  review    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([eventId, userId])
+}
+
+enum EventStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum TicketType {
+  FREE
+  STANDARD
+  VIP
+  VVIP
+}
+
+enum Category {
+  MUSIC
+  FILM
+  SPORT
+  EDUCATION
+}
