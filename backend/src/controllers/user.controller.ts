@@ -21,7 +21,6 @@ export class UserController {
       res.status(400).send(err);
     }
   }
-
   async editUser(req: Request, res: Response) {
     try {
       const { user_id } = req.params;
