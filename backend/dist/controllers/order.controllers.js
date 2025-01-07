@@ -208,67 +208,6 @@ class TransactionController {
             }
         });
     }
-    getUserPoints(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            try {
-                const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.user_id; // Mengambil user_id dari session atau token
-                if (!userId) {
-                    res.status(401).json({ message: "Unauthorized" });
-                }
-                const user = yield prisma_1.default.user.findUnique({
-                    where: { user_id: userId },
-                    select: { points: true }, // Mengambil poin dari pengguna
-                });
-                if (!user) {
-                    res.status(404).json({ message: "User not found" });
-                }
-                res.status(200).json({ points: user === null || user === void 0 ? void 0 : user.points });
-            }
-            catch (err) {
-                console.error("Error fetching user points:", err);
-                res.status(500).json({ message: "Internal Server Error" });
-            }
-        });
-    }
-    deductUserPoints(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            try {
-                const { points } = req.body;
-                const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.user_id; // Mengambil user_id dari session atau token
-                if (!userId) {
-                    res.status(401).json({ message: "Unauthorized" });
-                }
-                if (typeof points !== "number" || points <= 0) {
-                    res.status(400).json({ message: "Invalid points value" });
-                }
-                // Ambil data pengguna untuk memeriksa saldo poin
-                const user = yield prisma_1.default.user.findUnique({
-                    where: { user_id: userId },
-                    select: { points: true },
-                });
-                if (!user) {
-                    res.status(404).json({ message: "User not found" });
-                }
-                if (user.points < points) {
-                    res.status(400).json({ message: "Not enough points" });
-                }
-                // Kurangi poin pengguna
-                const updatedUser = yield prisma_1.default.user.update({
-                    where: { user_id: userId },
-                    data: {
-                        points: user.points - points,
-                    },
-                });
-                res.status(200).json({ success: true, points: updatedUser.points });
-            }
-            catch (err) {
-                console.error("Error deducting user points:", err);
-                res.status(500).json({ message: "Internal Server Error" });
-            }
-        });
-    }
     // Mendapatkan token Midtrans Snap
     getSnapToken(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -289,7 +228,6 @@ class TransactionController {
                                 username: true,
                                 email: true,
                                 phone: true,
-                                points: true,
                                 coupon: {
                                     select: {
                                         discountAmount: true, // Assuming this is percentage-based
@@ -323,22 +261,13 @@ class TransactionController {
                     quantity: detail.qty,
                     name: detail.ticketId.type,
                 }));
-                // Tambahkan item diskon kupon
+                // Tambahkan item diskon ke dalam item details jika ada
                 if (discountAmount > 0) {
                     item_details.push({
                         id: "DISCOUNT",
-                        price: -discountAmount, // Harga negatif untuk diskon kupon
+                        price: -discountAmount, // Harga negatif untuk diskon
                         quantity: 1,
-                        name: "Coupon Discount",
-                    });
-                }
-                // Tambahkan item diskon poin
-                if (discountAmount > 0) {
-                    item_details.push({
-                        id: "DISCOUNT",
-                        price: -discountAmount, // Harga negatif untuk diskon poin
-                        quantity: 1,
-                        name: "Point Discount",
+                        name: "Discount",
                     });
                 }
                 // Buat Snap token menggunakan Midtrans SDK
