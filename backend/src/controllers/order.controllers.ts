@@ -118,7 +118,7 @@ export class TransactionController {
                 },
                 where: {
                   used: false,
-                }
+                },
               },
             },
           },
@@ -166,7 +166,7 @@ export class TransactionController {
       }
 
       const transaction = await prisma.transaction.findUnique({
-        where: { transaction_id, user: {coupon: { used : false}} },
+        where: { transaction_id, user: { coupon: { used: false } } },
         include: { user: { select: { coupon: true } } },
       });
 
@@ -207,57 +207,33 @@ export class TransactionController {
     }
   }
 
-  async getUserPoints(req: Request, res: Response) {
-    try {
-      const userId = req.user?.user_id; // Mengambil user_id dari session atau token
-  
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-      }
-  
-      const user = await prisma.user.findUnique({
-        where: { user_id: userId },
-        select: { points: true }, // Mengambil poin dari pengguna
-      });
-  
-      if (!user) {
-        res.status(404).json({ message: "User not found" });
-      }
-  
-      res.status(200).json({ points: user?.points });
-    } catch (err) {
-      console.error("Error fetching user points:", err);
-      res.status(500).json({ message: "Internal Server Error" });
-    }
-  }
-
-  async deductUserPoints(req: Request, res: Response) {
+  async updateUserPoints(req: Request, res: Response) {
     try {
       const { points } = req.body;
       const userId = req.user?.user_id; // Mengambil user_id dari session atau token
-  
+
       if (!userId) {
         res.status(401).json({ message: "Unauthorized" });
       }
-  
+
       if (typeof points !== "number" || points <= 0) {
         res.status(400).json({ message: "Invalid points value" });
       }
-  
+
       // Ambil data pengguna untuk memeriksa saldo poin
       const user = await prisma.user.findUnique({
         where: { user_id: userId },
         select: { points: true },
       });
-  
+
       if (!user) {
         res.status(404).json({ message: "User not found" });
       }
-  
+
       if (user!.points < points) {
-         res.status(400).json({ message: "Not enough points" });
+        res.status(400).json({ message: "Not enough points" });
       }
-  
+
       // Kurangi poin pengguna
       const updatedUser = await prisma.user.update({
         where: { user_id: userId },
@@ -265,7 +241,8 @@ export class TransactionController {
           points: user!.points - points,
         },
       });
-  
+
+
       res.status(200).json({ success: true, points: updatedUser.points });
     } catch (err) {
       console.error("Error deducting user points:", err);
@@ -277,7 +254,7 @@ export class TransactionController {
   async getSnapToken(req: Request, res: Response) {
     try {
       const { orderId } = req.body;
-
+  
       // Ambil transaksi berdasarkan ID
       const transaction = await prisma.transaction.findUnique({
         where: { transaction_id: orderId },
@@ -292,6 +269,7 @@ export class TransactionController {
               username: true,
               email: true,
               phone: true,
+              points: true,
               coupon: {
                 select: {
                   discountAmount: true, // Assuming this is percentage-based
@@ -302,63 +280,79 @@ export class TransactionController {
           },
         },
       });
-
+  
       if (!transaction) throw new Error("Transaction not found");
-
+  
       if (transaction.paymentStatus === "FAILED") {
         throw new Error(
           "Cannot continue with this transaction as it is marked as failed."
         );
       }
-
+  
       // Hitung harga akhir transaksi dengan memperhitungkan diskon jika ada
-      const discount = transaction.user?.coupon?.discountAmount || 0;
-      const discountAmount = (transaction.totalPrice * discount) / 100; // Apply percentage discount
+      const couponDiscount = transaction.user?.coupon?.discountAmount || 0;
+      const pointDiscount = transaction.user.points || 0;
+  
+      // Diskon berdasarkan kupon
+      const discountAmount = (transaction.totalPrice * couponDiscount) / 100;
+  
+      // Hitung diskon dari poin, misalnya setiap 100 poin = 1 unit diskon
+      const pointDiscountAmount = pointDiscount / 100; // Contoh konversi: 1 poin = 1 unit diskon
+  
+      // Total diskon
+      const totalDiscount = discountAmount + pointDiscountAmount;
+  
+      // Hitung harga akhir setelah diskon
       const finalPrice =
-        transaction.OrderDetail.reduce(
-          (total, detail) => total + detail.subtotal!,
-          0
-        ) - discountAmount;
-
+        transaction.OrderDetail.reduce((total, detail) => total + detail.subtotal!, 0) - totalDiscount;
+  
       if (finalPrice <= 0) {
         throw new Error("Final price cannot be zero or negative.");
       }
-
+  
       type TicketType = string;
-
+  
       type ItemDetail = {
         id: number | "DISCOUNT"; // ID untuk item atau diskon
         price: number;
         quantity: number;
         name: TicketType | "Discount"; // Nama tipe tiket atau "Discount"
       };
-
+  
       // Format item details untuk Midtrans
-      const item_details: ItemDetail[] = transaction.OrderDetail.map(
-        (detail) => ({
-          id: detail.ticket_id,
-          price: detail.subtotal! / detail.qty,
-          quantity: detail.qty,
-          name: detail.ticketId.type,
-        })
-      );
-
-      // Tambahkan item diskon ke dalam item details jika ada
+      const item_details: ItemDetail[] = transaction.OrderDetail.map((detail) => ({
+        id: detail.ticket_id,
+        price: detail.subtotal! / detail.qty,
+        quantity: detail.qty,
+        name: detail.ticketId.type,
+      }));
+  
+      // Tambahkan item diskon kupon
       if (discountAmount > 0) {
         item_details.push({
           id: "DISCOUNT",
-          price: -discountAmount, // Harga negatif untuk diskon
+          price: -discountAmount, // Harga negatif untuk diskon kupon
           quantity: 1,
-          name: "Discount",
+          name: "Coupon Discount",
         });
       }
-
+  
+      // Tambahkan item diskon poin
+      if (pointDiscountAmount > 0) {
+        item_details.push({
+          id: "DISCOUNT",
+          price: -pointDiscountAmount, // Harga negatif untuk diskon poin
+          quantity: 1,
+          name: "Point Discount",
+        });
+      }
+  
       // Buat Snap token menggunakan Midtrans SDK
       const snap = new midtransClient.Snap({
         isProduction: false,
         serverKey: process.env.MID_SERVER_KEY,
       });
-
+  
       const parameters = {
         transaction_details: {
           order_id: orderId.toString(),
@@ -375,15 +369,16 @@ export class TransactionController {
           duration: 15,
         },
       };
-
+  
       const snapTransaction = await snap.createTransaction(parameters);
-
+  
       res.status(200).send({ result: snapTransaction.token });
     } catch (err) {
       console.error(err);
       res.status(400).send({ message: "Failed to create snap token" });
     }
   }
+  
 
   // Webhook Midtrans untuk memperbarui status transaksi
   async midtransWebhook(req: Request, res: Response) {
