@@ -29,8 +29,6 @@ export class TransactionRouter {
       verifyToken,
       this.transactionController.applyCoupon
     );
-    this.router.get("/users/profile/points",verifyToken, this.transactionController.getUserPoints)
-    this.router.post("/users/profile/points/deduct",verifyToken, this.transactionController.deductUserPoints)
     this.router.post(
       "/midtrans-webhook",
       this.transactionController.midtransWebhook
