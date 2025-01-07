@@ -92,7 +92,7 @@ export class UserController {
       // Kirim email
       await transporter.sendMail({
         from: "nuradriannaufal@gmail.com",
-        to: user!.email, 
+        to: user!.email,
         subject: "Forgot Password Request",
         html,
       });
@@ -158,6 +158,7 @@ export class UserController {
             select: {
               event: {
                 select: {
+                  event_id: true,
                   title: true,
                   location: true,
                   startTime: true,

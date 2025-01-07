@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { EventController } from "../controllers/event.controller";
 import { uploader } from "../services/uploader";
-import {  verifyToken } from "../middleware/verify";
+import { verifyToken } from "../middleware/verify";
 
 export class EventRouter {
   private eventController: EventController;
@@ -16,7 +16,11 @@ export class EventRouter {
   private initializeRoutes() {
     this.router.get("/", this.eventController.getEventId);
     this.router.get("/user", verifyToken, this.eventController.getEventUser);
-    this.router.get("/completed",verifyToken, this.eventController.getEventCompleted);
+    this.router.get(
+      "/completed",
+      verifyToken,
+      this.eventController.getEventCompleted
+    );
 
     this.router.post(
       "/create/",
