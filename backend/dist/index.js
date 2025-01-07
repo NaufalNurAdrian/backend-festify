@@ -19,7 +19,7 @@ const PORT = 8000;
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)({
-    origin: `${process.env.BASE_URL_FE}`,
+    origin: ["http://localhost:3000", "https://frontend-festify.vercel.app"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
 }));
