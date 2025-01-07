@@ -15,7 +15,7 @@ export class EventController {
       const events = await prisma.event.findMany({
         where: {
           ...filter,
-          status : "ACTIVE"
+          status: "ACTIVE",
         },
         select: {
           event_id: true,
@@ -49,7 +49,6 @@ export class EventController {
   }
   async getEventUser(req: Request, res: Response) {
     try {
-
       const userId = req.user?.user_id;
       if (!userId) {
         res.status(401).send({ message: "Unauthorized, login first" });
@@ -57,8 +56,8 @@ export class EventController {
 
       const events = await prisma.event.findMany({
         where: {
-          status : "ACTIVE",
-          user_id: userId
+          status: "ACTIVE",
+          user_id: userId,
         },
         select: {
           event_id: true,
@@ -90,7 +89,7 @@ export class EventController {
       res.status(400).send({ message: "Events Not Found" });
     }
   }
-  
+
   async getEventCompleted(req: Request, res: Response) {
     try {
       const userId = req.user?.user_id;
@@ -99,8 +98,8 @@ export class EventController {
       }
       const events = await prisma.event.findMany({
         where: {
-          status : "COMPLETED",
-          user_id: userId
+          status: "COMPLETED",
+          user_id: userId,
         },
         select: {
           event_id: true,
@@ -130,7 +129,7 @@ export class EventController {
       res.status(400).send({ message: "Events Not Found" });
     }
   }
-  
+
   async getEventSlug(req: Request, res: Response) {
     try {
       const { slug } = req.params;
