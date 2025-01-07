@@ -153,6 +153,12 @@ export class UserController {
               finalPrice: true,
               transactionDate: true,
               expiredAt: true,
+              user_id: true,
+              OrderDetail: {
+                select: {
+                  qrCode: true
+                }
+              }
             },
           },
           ticketId: {
@@ -175,6 +181,25 @@ export class UserController {
       res.status(200).send({ message: "get ticket successfully", tickets });
     } catch (error) {
       res.status(400).send({ message: "cannot get ticket" });
+    }
+  }
+
+  async updateTicket(req: Request, res: Response) {
+    try {
+      const user_id = req.params
+      
+      await prisma.orderDetail.updateMany({
+        data: {
+          used: true
+        },
+        where : {
+          transaction: {
+            user_id: user_id
+          }
+        }
+      })
+    } catch (error) {
+      console.error(error)
     }
   }
 
