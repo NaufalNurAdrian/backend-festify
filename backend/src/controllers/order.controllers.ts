@@ -285,7 +285,7 @@ export class TransactionController {
   async getSnapToken(req: Request, res: Response) {
     try {
       const { orderId } = req.body;
-  
+
       // Ambil transaksi berdasarkan ID
       const transaction = await prisma.transaction.findUnique({
         where: { transaction_id: orderId },
@@ -300,7 +300,6 @@ export class TransactionController {
               username: true,
               email: true,
               phone: true,
-              points: true,
               coupon: {
                 select: {
                   discountAmount: true, // Assuming this is percentage-based
@@ -312,9 +311,9 @@ export class TransactionController {
           },
         },
       });
-  
+
       if (!transaction) throw new Error("Transaction not found");
-  
+
       if (transaction.paymentStatus === "FAILED") {
         throw new Error(
           "Cannot continue with this transaction as it is marked as failed."
@@ -330,55 +329,50 @@ export class TransactionController {
       }
 
       const finalPrice =
-        transaction.OrderDetail.reduce((total, detail) => total + detail.subtotal!, 0) - discountAmount;
-  
+        transaction.OrderDetail.reduce(
+          (total, detail) => total + detail.subtotal!,
+          0
+        ) - discountAmount;
+
       if (finalPrice <= 0) {
         throw new Error("Final price cannot be zero or negative.");
       }
-  
+
       type TicketType = string;
-  
+
       type ItemDetail = {
         id: number | "DISCOUNT"; // ID untuk item atau diskon
         price: number;
         quantity: number;
         name: TicketType | "Discount"; // Nama tipe tiket atau "Discount"
       };
-  
+
       // Format item details untuk Midtrans
-      const item_details: ItemDetail[] = transaction.OrderDetail.map((detail) => ({
-        id: detail.ticket_id,
-        price: detail.subtotal! / detail.qty,
-        quantity: detail.qty,
-        name: detail.ticketId.type,
-      }));
-  
-      // Tambahkan item diskon kupon
+      const item_details: ItemDetail[] = transaction.OrderDetail.map(
+        (detail) => ({
+          id: detail.ticket_id,
+          price: detail.subtotal! / detail.qty,
+          quantity: detail.qty,
+          name: detail.ticketId.type,
+        })
+      );
+
+      // Tambahkan item diskon ke dalam item details jika ada
       if (discountAmount > 0) {
         item_details.push({
           id: "DISCOUNT",
-          price: -discountAmount, // Harga negatif untuk diskon kupon
+          price: -discountAmount, // Harga negatif untuk diskon
           quantity: 1,
-          name: "Coupon Discount",
+          name: "Discount",
         });
       }
-  
-      // Tambahkan item diskon poin
-      if (discountAmount > 0) {
-        item_details.push({
-          id: "DISCOUNT",
-          price: -discountAmount, // Harga negatif untuk diskon poin
-          quantity: 1,
-          name: "Point Discount",
-        });
-      }
-  
+
       // Buat Snap token menggunakan Midtrans SDK
       const snap = new midtransClient.Snap({
         isProduction: false,
         serverKey: process.env.MID_SERVER_KEY,
       });
-  
+
       const parameters = {
         transaction_details: {
           order_id: orderId.toString(),
@@ -395,16 +389,15 @@ export class TransactionController {
           duration: 15,
         },
       };
-  
+
       const snapTransaction = await snap.createTransaction(parameters);
-  
+
       res.status(200).send({ result: snapTransaction.token });
     } catch (err) {
       console.error(err);
       res.status(400).send({ message: "Failed to create snap token" });
     }
   }
-  
 
   // Webhook Midtrans untuk memperbarui status transaksi
   async midtransWebhook(req: Request, res: Response) {
