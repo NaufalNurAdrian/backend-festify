@@ -181,7 +181,9 @@ exports.Prisma.OrderDetailScalarFieldEnum = {
   orderId: 'orderId',
   ticket_id: 'ticket_id',
   qty: 'qty',
-  subtotal: 'subtotal'
+  subtotal: 'subtotal',
+  used: 'used',
+  qrCode: 'qrCode'
 };
 
 exports.Prisma.CouponScalarFieldEnum = {

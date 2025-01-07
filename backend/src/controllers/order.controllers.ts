@@ -43,6 +43,8 @@ export class TransactionController {
               );
             }
 
+            const url = `https://backend-festify.vercel.app/api/users/usedticket/${transaction.user_id}`
+
             // Buat orderDetail baru
             await prisma.orderDetail.create({
               data: {
@@ -50,6 +52,7 @@ export class TransactionController {
                 ticket_id: item.ticketId.ticket_id,
                 qty: item.qty,
                 subtotal: item.qty * ticket.price,
+                qrCode: url
               },
             });
 
@@ -280,7 +283,6 @@ export class TransactionController {
     }
   }
   
-
   // Mendapatkan token Midtrans Snap
   async getSnapToken(req: Request, res: Response) {
     try {

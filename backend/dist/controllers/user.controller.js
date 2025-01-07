@@ -168,6 +168,12 @@ class UserController {
                                 finalPrice: true,
                                 transactionDate: true,
                                 expiredAt: true,
+                                user_id: true,
+                                OrderDetail: {
+                                    select: {
+                                        qrCode: true
+                                    }
+                                }
                             },
                         },
                         ticketId: {
@@ -190,6 +196,26 @@ class UserController {
             }
             catch (error) {
                 res.status(400).send({ message: "cannot get ticket" });
+            }
+        });
+    }
+    updateTicket(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const user_id = req.params;
+                yield prisma_1.default.orderDetail.updateMany({
+                    data: {
+                        used: true
+                    },
+                    where: {
+                        transaction: {
+                            user_id: user_id
+                        }
+                    }
+                });
+            }
+            catch (error) {
+                console.error(error);
             }
         });
     }

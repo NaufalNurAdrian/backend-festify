@@ -3,8 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
+// import dotenv from "dotenv";
+// dotenv.config();
 const express_1 = __importDefault(require("express"));
 const auth_router_1 = require("./routers/auth.router");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));

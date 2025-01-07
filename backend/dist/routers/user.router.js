@@ -18,6 +18,7 @@ class UserRouter {
         this.router.patch("/avatar", verify_1.verifyToken, (0, uploader_1.uploader)("memoryStorage", "avatar").single("avatar"), this.userController.editAvatar);
         this.router.post("/verify-forgot", this.userController.verifyForgotPass);
         this.router.patch("/forgot-password", this.userController.editPassword);
+        this.router.patch("/usedticket/:user_id");
         this.router.patch("/:id", this.userController.editUser);
         this.router.delete("/:id", this.userController.deleteUser);
     }

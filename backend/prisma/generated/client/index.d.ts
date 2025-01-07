@@ -6363,6 +6363,8 @@ export namespace Prisma {
     ticket_id: number | null
     qty: number | null
     subtotal: number | null
+    used: boolean | null
+    qrCode: string | null
   }
 
   export type OrderDetailMaxAggregateOutputType = {
@@ -6370,6 +6372,8 @@ export namespace Prisma {
     ticket_id: number | null
     qty: number | null
     subtotal: number | null
+    used: boolean | null
+    qrCode: string | null
   }
 
   export type OrderDetailCountAggregateOutputType = {
@@ -6377,6 +6381,8 @@ export namespace Prisma {
     ticket_id: number
     qty: number
     subtotal: number
+    used: number
+    qrCode: number
     _all: number
   }
 
@@ -6400,6 +6406,8 @@ export namespace Prisma {
     ticket_id?: true
     qty?: true
     subtotal?: true
+    used?: true
+    qrCode?: true
   }
 
   export type OrderDetailMaxAggregateInputType = {
@@ -6407,6 +6415,8 @@ export namespace Prisma {
     ticket_id?: true
     qty?: true
     subtotal?: true
+    used?: true
+    qrCode?: true
   }
 
   export type OrderDetailCountAggregateInputType = {
@@ -6414,6 +6424,8 @@ export namespace Prisma {
     ticket_id?: true
     qty?: true
     subtotal?: true
+    used?: true
+    qrCode?: true
     _all?: true
   }
 
@@ -6508,6 +6520,8 @@ export namespace Prisma {
     ticket_id: number
     qty: number
     subtotal: number | null
+    used: boolean
+    qrCode: string
     _count: OrderDetailCountAggregateOutputType | null
     _avg: OrderDetailAvgAggregateOutputType | null
     _sum: OrderDetailSumAggregateOutputType | null
@@ -6534,6 +6548,8 @@ export namespace Prisma {
     ticket_id?: boolean
     qty?: boolean
     subtotal?: boolean
+    used?: boolean
+    qrCode?: boolean
     ticketId?: boolean | TicketDefaultArgs<ExtArgs>
     transaction?: boolean | OrderDetail$transactionArgs<ExtArgs>
   }, ExtArgs["result"]["orderDetail"]>
@@ -6543,6 +6559,8 @@ export namespace Prisma {
     ticket_id?: boolean
     qty?: boolean
     subtotal?: boolean
+    used?: boolean
+    qrCode?: boolean
     ticketId?: boolean | TicketDefaultArgs<ExtArgs>
     transaction?: boolean | OrderDetail$transactionArgs<ExtArgs>
   }, ExtArgs["result"]["orderDetail"]>
@@ -6552,6 +6570,8 @@ export namespace Prisma {
     ticket_id?: boolean
     qty?: boolean
     subtotal?: boolean
+    used?: boolean
+    qrCode?: boolean
   }
 
   export type OrderDetailInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6574,6 +6594,8 @@ export namespace Prisma {
       ticket_id: number
       qty: number
       subtotal: number | null
+      used: boolean
+      qrCode: string
     }, ExtArgs["result"]["orderDetail"]>
     composites: {}
   }
@@ -6973,6 +6995,8 @@ export namespace Prisma {
     readonly ticket_id: FieldRef<"OrderDetail", 'Int'>
     readonly qty: FieldRef<"OrderDetail", 'Int'>
     readonly subtotal: FieldRef<"OrderDetail", 'Int'>
+    readonly used: FieldRef<"OrderDetail", 'Boolean'>
+    readonly qrCode: FieldRef<"OrderDetail", 'String'>
   }
     
 
@@ -11406,7 +11430,9 @@ export namespace Prisma {
     orderId: 'orderId',
     ticket_id: 'ticket_id',
     qty: 'qty',
-    subtotal: 'subtotal'
+    subtotal: 'subtotal',
+    used: 'used',
+    qrCode: 'qrCode'
   };
 
   export type OrderDetailScalarFieldEnum = (typeof OrderDetailScalarFieldEnum)[keyof typeof OrderDetailScalarFieldEnum]
@@ -12016,6 +12042,8 @@ export namespace Prisma {
     ticket_id?: IntFilter<"OrderDetail"> | number
     qty?: IntFilter<"OrderDetail"> | number
     subtotal?: IntNullableFilter<"OrderDetail"> | number | null
+    used?: BoolFilter<"OrderDetail"> | boolean
+    qrCode?: StringFilter<"OrderDetail"> | string
     ticketId?: XOR<TicketScalarRelationFilter, TicketWhereInput>
     transaction?: XOR<TransactionNullableScalarRelationFilter, TransactionWhereInput> | null
   }
@@ -12025,6 +12053,8 @@ export namespace Prisma {
     ticket_id?: SortOrder
     qty?: SortOrder
     subtotal?: SortOrderInput | SortOrder
+    used?: SortOrder
+    qrCode?: SortOrder
     ticketId?: TicketOrderByWithRelationInput
     transaction?: TransactionOrderByWithRelationInput
   }
@@ -12038,6 +12068,8 @@ export namespace Prisma {
     ticket_id?: IntFilter<"OrderDetail"> | number
     qty?: IntFilter<"OrderDetail"> | number
     subtotal?: IntNullableFilter<"OrderDetail"> | number | null
+    used?: BoolFilter<"OrderDetail"> | boolean
+    qrCode?: StringFilter<"OrderDetail"> | string
     ticketId?: XOR<TicketScalarRelationFilter, TicketWhereInput>
     transaction?: XOR<TransactionNullableScalarRelationFilter, TransactionWhereInput> | null
   }, "orderId_ticket_id">
@@ -12047,6 +12079,8 @@ export namespace Prisma {
     ticket_id?: SortOrder
     qty?: SortOrder
     subtotal?: SortOrderInput | SortOrder
+    used?: SortOrder
+    qrCode?: SortOrder
     _count?: OrderDetailCountOrderByAggregateInput
     _avg?: OrderDetailAvgOrderByAggregateInput
     _max?: OrderDetailMaxOrderByAggregateInput
@@ -12062,6 +12096,8 @@ export namespace Prisma {
     ticket_id?: IntWithAggregatesFilter<"OrderDetail"> | number
     qty?: IntWithAggregatesFilter<"OrderDetail"> | number
     subtotal?: IntNullableWithAggregatesFilter<"OrderDetail"> | number | null
+    used?: BoolWithAggregatesFilter<"OrderDetail"> | boolean
+    qrCode?: StringWithAggregatesFilter<"OrderDetail"> | string
   }
 
   export type CouponWhereInput = {
@@ -12751,6 +12787,8 @@ export namespace Prisma {
   export type OrderDetailCreateInput = {
     qty: number
     subtotal?: number | null
+    used?: boolean
+    qrCode?: string
     ticketId: TicketCreateNestedOneWithoutOrderDetailInput
     transaction?: TransactionCreateNestedOneWithoutOrderDetailInput
   }
@@ -12760,11 +12798,15 @@ export namespace Prisma {
     ticket_id: number
     qty: number
     subtotal?: number | null
+    used?: boolean
+    qrCode?: string
   }
 
   export type OrderDetailUpdateInput = {
     qty?: IntFieldUpdateOperationsInput | number
     subtotal?: NullableIntFieldUpdateOperationsInput | number | null
+    used?: BoolFieldUpdateOperationsInput | boolean
+    qrCode?: StringFieldUpdateOperationsInput | string
     ticketId?: TicketUpdateOneRequiredWithoutOrderDetailNestedInput
     transaction?: TransactionUpdateOneWithoutOrderDetailNestedInput
   }
@@ -12774,6 +12816,8 @@ export namespace Prisma {
     ticket_id?: IntFieldUpdateOperationsInput | number
     qty?: IntFieldUpdateOperationsInput | number
     subtotal?: NullableIntFieldUpdateOperationsInput | number | null
+    used?: BoolFieldUpdateOperationsInput | boolean
+    qrCode?: StringFieldUpdateOperationsInput | string
   }
 
   export type OrderDetailCreateManyInput = {
@@ -12781,11 +12825,15 @@ export namespace Prisma {
     ticket_id: number
     qty: number
     subtotal?: number | null
+    used?: boolean
+    qrCode?: string
   }
 
   export type OrderDetailUpdateManyMutationInput = {
     qty?: IntFieldUpdateOperationsInput | number
     subtotal?: NullableIntFieldUpdateOperationsInput | number | null
+    used?: BoolFieldUpdateOperationsInput | boolean
+    qrCode?: StringFieldUpdateOperationsInput | string
   }
 
   export type OrderDetailUncheckedUpdateManyInput = {
@@ -12793,6 +12841,8 @@ export namespace Prisma {
     ticket_id?: IntFieldUpdateOperationsInput | number
     qty?: IntFieldUpdateOperationsInput | number
     subtotal?: NullableIntFieldUpdateOperationsInput | number | null
+    used?: BoolFieldUpdateOperationsInput | boolean
+    qrCode?: StringFieldUpdateOperationsInput | string
   }
 
   export type CouponCreateInput = {
@@ -13634,6 +13684,8 @@ export namespace Prisma {
     ticket_id?: SortOrder
     qty?: SortOrder
     subtotal?: SortOrder
+    used?: SortOrder
+    qrCode?: SortOrder
   }
 
   export type OrderDetailAvgOrderByAggregateInput = {
@@ -13648,6 +13700,8 @@ export namespace Prisma {
     ticket_id?: SortOrder
     qty?: SortOrder
     subtotal?: SortOrder
+    used?: SortOrder
+    qrCode?: SortOrder
   }
 
   export type OrderDetailMinOrderByAggregateInput = {
@@ -13655,6 +13709,8 @@ export namespace Prisma {
     ticket_id?: SortOrder
     qty?: SortOrder
     subtotal?: SortOrder
+    used?: SortOrder
+    qrCode?: SortOrder
   }
 
   export type OrderDetailSumOrderByAggregateInput = {
@@ -15378,6 +15434,8 @@ export namespace Prisma {
   export type OrderDetailCreateWithoutTicketIdInput = {
     qty: number
     subtotal?: number | null
+    used?: boolean
+    qrCode?: string
     transaction?: TransactionCreateNestedOneWithoutOrderDetailInput
   }
 
@@ -15385,6 +15443,8 @@ export namespace Prisma {
     orderId: number
     qty: number
     subtotal?: number | null
+    used?: boolean
+    qrCode?: string
   }
 
   export type OrderDetailCreateOrConnectWithoutTicketIdInput = {
@@ -15469,6 +15529,8 @@ export namespace Prisma {
     ticket_id?: IntFilter<"OrderDetail"> | number
     qty?: IntFilter<"OrderDetail"> | number
     subtotal?: IntNullableFilter<"OrderDetail"> | number | null
+    used?: BoolFilter<"OrderDetail"> | boolean
+    qrCode?: StringFilter<"OrderDetail"> | string
   }
 
   export type UserCreateWithoutTransactionInput = {
@@ -15540,6 +15602,8 @@ export namespace Prisma {
   export type OrderDetailCreateWithoutTransactionInput = {
     qty: number
     subtotal?: number | null
+    used?: boolean
+    qrCode?: string
     ticketId: TicketCreateNestedOneWithoutOrderDetailInput
   }
 
@@ -15547,6 +15611,8 @@ export namespace Prisma {
     ticket_id: number
     qty: number
     subtotal?: number | null
+    used?: boolean
+    qrCode?: string
   }
 
   export type OrderDetailCreateOrConnectWithoutTransactionInput = {
@@ -16528,11 +16594,15 @@ export namespace Prisma {
     orderId: number
     qty: number
     subtotal?: number | null
+    used?: boolean
+    qrCode?: string
   }
 
   export type OrderDetailUpdateWithoutTicketIdInput = {
     qty?: IntFieldUpdateOperationsInput | number
     subtotal?: NullableIntFieldUpdateOperationsInput | number | null
+    used?: BoolFieldUpdateOperationsInput | boolean
+    qrCode?: StringFieldUpdateOperationsInput | string
     transaction?: TransactionUpdateOneWithoutOrderDetailNestedInput
   }
 
@@ -16540,23 +16610,31 @@ export namespace Prisma {
     orderId?: IntFieldUpdateOperationsInput | number
     qty?: IntFieldUpdateOperationsInput | number
     subtotal?: NullableIntFieldUpdateOperationsInput | number | null
+    used?: BoolFieldUpdateOperationsInput | boolean
+    qrCode?: StringFieldUpdateOperationsInput | string
   }
 
   export type OrderDetailUncheckedUpdateManyWithoutTicketIdInput = {
     orderId?: IntFieldUpdateOperationsInput | number
     qty?: IntFieldUpdateOperationsInput | number
     subtotal?: NullableIntFieldUpdateOperationsInput | number | null
+    used?: BoolFieldUpdateOperationsInput | boolean
+    qrCode?: StringFieldUpdateOperationsInput | string
   }
 
   export type OrderDetailCreateManyTransactionInput = {
     ticket_id: number
     qty: number
     subtotal?: number | null
+    used?: boolean
+    qrCode?: string
   }
 
   export type OrderDetailUpdateWithoutTransactionInput = {
     qty?: IntFieldUpdateOperationsInput | number
     subtotal?: NullableIntFieldUpdateOperationsInput | number | null
+    used?: BoolFieldUpdateOperationsInput | boolean
+    qrCode?: StringFieldUpdateOperationsInput | string
     ticketId?: TicketUpdateOneRequiredWithoutOrderDetailNestedInput
   }
 
@@ -16564,12 +16642,16 @@ export namespace Prisma {
     ticket_id?: IntFieldUpdateOperationsInput | number
     qty?: IntFieldUpdateOperationsInput | number
     subtotal?: NullableIntFieldUpdateOperationsInput | number | null
+    used?: BoolFieldUpdateOperationsInput | boolean
+    qrCode?: StringFieldUpdateOperationsInput | string
   }
 
   export type OrderDetailUncheckedUpdateManyWithoutTransactionInput = {
     ticket_id?: IntFieldUpdateOperationsInput | number
     qty?: IntFieldUpdateOperationsInput | number
     subtotal?: NullableIntFieldUpdateOperationsInput | number | null
+    used?: BoolFieldUpdateOperationsInput | boolean
+    qrCode?: StringFieldUpdateOperationsInput | string
   }
 
   export type TransactionCreateManyDiscountInput = {
