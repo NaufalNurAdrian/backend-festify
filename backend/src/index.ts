@@ -18,13 +18,13 @@ const PORT: number = 8000;
 
 const app: Application = express();
 app.use(express.json());
-app.use(
-  cors({
-    origin: ["http://localhost:3000", "https://frontend-festify.vercel.app"],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  })
-);
+// app.use(
+//   cors({
+//     origin: [`${process.env.BASE_URL_FE}`],
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+//   })
+// );
 app.use(cookieParser());
 
 app.get("/api", (req: Request, res: Response) => {

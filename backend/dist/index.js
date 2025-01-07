@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
 const auth_router_1 = require("./routers/auth.router");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const user_router_1 = require("./routers/user.router");
@@ -18,11 +17,13 @@ const review_router_1 = require("./routers/review.router");
 const PORT = 8000;
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
-app.use((0, cors_1.default)({
-    origin: ["http://localhost:3000", "https://frontend-festify.vercel.app"],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-}));
+// app.use(
+//   cors({
+//     origin: [`${process.env.BASE_URL_FE}`],
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+//   })
+// );
 app.use((0, cookie_parser_1.default)());
 app.get("/api", (req, res) => {
     res.status(200).send("Welcome to my API");
