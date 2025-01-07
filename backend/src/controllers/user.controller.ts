@@ -149,6 +149,7 @@ export class UserController {
           qty: true,
           transaction: {
             select: {
+              paymentStatus: true,
               finalPrice: true,
               transactionDate: true,
               expiredAt: true,
