@@ -30,6 +30,11 @@ export class TransactionRouter {
       this.transactionController.applyCoupon
     );
     this.router.post(
+      "/applyPoints",
+      verifyToken,
+      this.transactionController.applyPoint
+    );
+    this.router.post(
       "/midtrans-webhook",
       this.transactionController.midtransWebhook
     );
