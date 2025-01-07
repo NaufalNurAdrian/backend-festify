@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma";
-import { Prisma, TicketType } from "@prisma/client";
+import { Prisma, TicketType } from "../../prisma/generated/client";
 import { createSlug } from "../helpers/slug";
 import { cloudinaryUpload } from "../services/cloudinary";
 

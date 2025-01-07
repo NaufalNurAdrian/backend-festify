@@ -334,7 +334,7 @@ export class TransactionController {
       }
 
       const finalPrice =
-        transaction.OrderDetail.reduce((total, detail) => total + detail.subtotal!, 0) - totalDiscount;
+        transaction.OrderDetail.reduce((total, detail) => total + detail.subtotal!, 0) - discountAmount;
   
       if (finalPrice <= 0) {
         throw new Error("Final price cannot be zero or negative.");
@@ -368,10 +368,10 @@ export class TransactionController {
       }
   
       // Tambahkan item diskon poin
-      if (pointDiscountAmount > 0) {
+      if (discountAmount > 0) {
         item_details.push({
           id: "DISCOUNT",
-          price: -pointDiscountAmount, // Harga negatif untuk diskon poin
+          price: -discountAmount, // Harga negatif untuk diskon poin
           quantity: 1,
           name: "Point Discount",
         });

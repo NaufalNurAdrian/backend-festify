@@ -29,13 +29,14 @@ export class TransactionRouter {
       verifyToken,
       this.transactionController.applyCoupon
     );
-    this.router.patch("/users/profile/points/update",verifyToken, this.transactionController.updateUserPoints)
+    this.router.get("/users/profile/points",verifyToken, this.transactionController.getUserPoints)
+    this.router.post("/users/profile/points/deduct",verifyToken, this.transactionController.deductUserPoints)
     this.router.post(
       "/midtrans-webhook",
       this.transactionController.midtransWebhook
     );
     this.router.get(
-      "/:transaction_id", verifyToken,
+      "/:transaction_id",
       this.transactionController.getTransactionId
     );
     
