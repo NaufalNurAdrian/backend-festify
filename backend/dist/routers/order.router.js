@@ -15,8 +15,6 @@ class TransactionRouter {
         this.router.post("/payment", verify_1.verifyToken, this.transactionController.getSnapToken);
         // Tambahkan route untuk applyCoupon
         this.router.post("/applyCoupon", verify_1.verifyToken, this.transactionController.applyCoupon);
-        this.router.get("/users/profile/points", verify_1.verifyToken, this.transactionController.getUserPoints);
-        this.router.post("/users/profile/points/deduct", verify_1.verifyToken, this.transactionController.deductUserPoints);
         this.router.post("/midtrans-webhook", this.transactionController.midtransWebhook);
         this.router.get("/:transaction_id", this.transactionController.getTransactionId);
     }
