@@ -46,6 +46,7 @@ class TransactionController {
                         if (item.qty > ticket.seats) {
                             throw new Error(`Insufficient seats for ticket ID: ${item.ticketId.ticket_id}`);
                         }
+                        const url = `https://backend-festify.vercel.app/api/users/usedticket/${transaction.user_id}`;
                         // Buat orderDetail baru
                         yield prisma.orderDetail.create({
                             data: {
@@ -53,6 +54,7 @@ class TransactionController {
                                 ticket_id: item.ticketId.ticket_id,
                                 qty: item.qty,
                                 subtotal: item.qty * ticket.price,
+                                qrCode: url
                             },
                         });
                         // Kurangi jumlah kursi
@@ -203,6 +205,62 @@ class TransactionController {
                 console.error(err.message);
                 res.status(400).send({
                     message: "Error applying coupon",
+                    error: err.message,
+                });
+            }
+        });
+    }
+    applyPoint(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { transaction_id, points } = req.body;
+                // Validasi input
+                const pointsToUse = parseInt(points, 10);
+                if (isNaN(pointsToUse) || pointsToUse <= 0) {
+                    throw new Error("Invalid points provided");
+                }
+                // Ambil data transaksi dan poin pengguna
+                const transaction = yield prisma_1.default.transaction.findUnique({
+                    where: { transaction_id: +transaction_id },
+                    include: {
+                        user: {
+                            select: {
+                                points: true,
+                            },
+                        },
+                    },
+                });
+                if (!transaction)
+                    throw new Error("Transaction not found");
+                if (!transaction.user)
+                    throw new Error("User not associated with transaction");
+                const userPoints = transaction.user.points || 0;
+                if (userPoints < pointsToUse) {
+                    throw new Error("Insufficient points to apply for this transaction");
+                }
+                // Hitung harga final setelah potongan poin
+                const pointDiscount = pointsToUse; // Misalnya 1 poin = 1 unit mata uang
+                const finalPrice = Math.max(transaction.totalPrice - pointDiscount, 0);
+                yield prisma_1.default.$transaction((prisma) => __awaiter(this, void 0, void 0, function* () {
+                    // Perbarui transaksi dengan harga final
+                    yield prisma.transaction.update({
+                        where: { transaction_id: +transaction_id },
+                        data: { finalPrice },
+                    });
+                    // Kurangi poin dari pengguna
+                    yield prisma.user.update({
+                        where: { user_id: transaction.user_id },
+                        data: { points: userPoints - pointsToUse },
+                    });
+                }));
+                res
+                    .status(200)
+                    .send({ message: "Points applied successfully", finalPrice });
+            }
+            catch (err) {
+                console.error(err.message);
+                res.status(400).send({
+                    message: "Error applying points",
                     error: err.message,
                 });
             }

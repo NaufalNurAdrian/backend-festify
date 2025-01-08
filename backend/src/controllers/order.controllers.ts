@@ -43,6 +43,8 @@ export class TransactionController {
               );
             }
 
+            const url = `https://backend-festify.vercel.app/api/users/usedticket/${transaction.transaction_id}`
+
             // Buat orderDetail baru
             await prisma.orderDetail.create({
               data: {
@@ -50,6 +52,7 @@ export class TransactionController {
                 ticket_id: item.ticketId.ticket_id,
                 qty: item.qty,
                 subtotal: item.qty * ticket.price,
+                qrCode: url
               },
             });
 
@@ -219,6 +222,67 @@ export class TransactionController {
     }
   }
 
+  async applyPoint(req: Request, res: Response) {
+    try {
+      const { transaction_id, points } = req.body;
+  
+      // Validasi input
+      const pointsToUse = parseInt(points, 10);
+      if (isNaN(pointsToUse) || pointsToUse <= 0) {
+        throw new Error("Invalid points provided");
+      }
+  
+      // Ambil data transaksi dan poin pengguna
+      const transaction = await prisma.transaction.findUnique({
+        where: { transaction_id: +transaction_id },
+        include: {
+          user: {
+            select: {
+              points: true,
+            },
+          },
+        },
+      });
+  
+      if (!transaction) throw new Error("Transaction not found");
+      if (!transaction.user) throw new Error("User not associated with transaction");
+  
+      const userPoints = transaction.user.points || 0;
+  
+      if (userPoints < pointsToUse) {
+        throw new Error("Insufficient points to apply for this transaction");
+      }
+  
+      // Hitung harga final setelah potongan poin
+      const pointDiscount = pointsToUse; // Misalnya 1 poin = 1 unit mata uang
+      const finalPrice = Math.max(transaction.totalPrice - pointDiscount, 0);
+  
+      await prisma.$transaction(async (prisma) => {
+        // Perbarui transaksi dengan harga final
+        await prisma.transaction.update({
+          where: { transaction_id: +transaction_id },
+          data: { finalPrice },
+        });
+  
+        // Kurangi poin dari pengguna
+        await prisma.user.update({
+          where: { user_id: transaction.user_id },
+          data: { points: userPoints - pointsToUse },
+        });
+      });
+  
+      res
+        .status(200)
+        .send({ message: "Points applied successfully", finalPrice });
+    } catch (err) {
+      console.error((err as Error).message);
+      res.status(400).send({
+        message: "Error applying points",
+        error: (err as Error).message,
+      });
+    }
+  }
+  
   // Mendapatkan token Midtrans Snap
   async getSnapToken(req: Request, res: Response): Promise<void> {
     try {

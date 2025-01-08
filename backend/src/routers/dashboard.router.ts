@@ -42,6 +42,11 @@ export class DashboardRouter {
       verifyToken,
       this.dashboardControlller.getTotalTransaction
     );
+    this.router.get(
+      "/event-attende",
+      verifyToken,
+      this.dashboardControlller.getAnttendeEvent
+    );
   }
   getRouter(): Router {
     return this.router;

@@ -17,6 +17,7 @@ class DashboardRouter {
         this.router.get("/event-active/", verify_1.verifyToken, this.dashboardControlller.getEventActive);
         this.router.get("/event-deactive/", verify_1.verifyToken, this.dashboardControlller.getEventDeactive);
         this.router.get("/event-transaction/", verify_1.verifyToken, this.dashboardControlller.getTotalTransaction);
+        this.router.get("/event-attende", verify_1.verifyToken, this.dashboardControlller.getAnttendeEvent);
     }
     getRouter() {
         return this.router;

@@ -91,6 +91,8 @@ model OrderDetail {
   subtotal    Int?
   ticketId    Ticket       @relation(fields: [ticket_id], references: [ticket_id])
   transaction Transaction? @relation(fields: [orderId], references: [transaction_id])
+  used        Boolean      @default(false)
+  qrCode      String       @default("https://backend-festify.vercel.app/api/users/usedticket")
 
   @@id([orderId, ticket_id])
 }

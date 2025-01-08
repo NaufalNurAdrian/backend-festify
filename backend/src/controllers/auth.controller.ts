@@ -134,6 +134,8 @@ export class AuthController {
   async loginUser(req: Request, res: Response) {
     try {
       const { data, password } = req.body;
+      console.log(req.body);
+      
 
       const user = await findUser(data, data);
       if (!user) throw { message: "Account not found!" };
