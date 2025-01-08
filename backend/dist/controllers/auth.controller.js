@@ -137,6 +137,7 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { data, password } = req.body;
+                console.log(req.body);
                 const user = yield (0, auth_sevices_1.findUser)(data, data);
                 if (!user)
                     throw { message: "Account not found!" };
