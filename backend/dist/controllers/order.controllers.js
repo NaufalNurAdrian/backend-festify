@@ -46,7 +46,7 @@ class TransactionController {
                         if (item.qty > ticket.seats) {
                             throw new Error(`Insufficient seats for ticket ID: ${item.ticketId.ticket_id}`);
                         }
-                        const url = `https://backend-festify.vercel.app/api/users/usedticket/${transaction.user_id}`;
+                        const url = `https://backend-festify.vercel.app/api/users/usedticket/${transaction.transaction_id}`;
                         // Buat orderDetail baru
                         yield prisma.orderDetail.create({
                             data: {
@@ -278,7 +278,7 @@ class TransactionController {
                     include: {
                         OrderDetail: {
                             include: {
-                                ticketId: { select: { type: true } },
+                                ticketId: { select: { type: true, price: true } },
                             },
                         },
                         user: {
@@ -288,25 +288,38 @@ class TransactionController {
                                 phone: true,
                                 coupon: {
                                     select: {
-                                        discountAmount: true, // Assuming this is percentage-based
-                                        expiresAt: true,
-                                        used: true, // Tambahkan properti 'used'
+                                        discountAmount: true, // Diskon dalam persentase
+                                        expiresAt: true, // Tanggal kedaluwarsa kupon
+                                        used: true, // Status penggunaan kupon
                                     },
                                 },
                             },
                         },
                     },
                 });
-                if (!transaction)
+                if (!transaction) {
                     throw new Error("Transaction not found");
+                }
                 if (transaction.paymentStatus === "FAILED") {
                     throw new Error("Cannot continue with this transaction as it is marked as failed.");
+                }
+                // Cek apakah semua tiket dalam transaksi gratis
+                const isFreeTransaction = transaction.OrderDetail.every((detail) => detail.ticketId.price === 0);
+                if (isFreeTransaction) {
+                    // Tandai transaksi sebagai sukses tanpa pembayaran
+                    yield prisma_1.default.transaction.update({
+                        where: { transaction_id: orderId },
+                        data: { paymentStatus: "COMPLETED" },
+                    });
+                    res.status(200).send({
+                        message: "Transaction completed successfully (free tickets).",
+                    });
                 }
                 // Logika untuk diskon hanya jika kupon valid dan belum digunakan
                 const coupon = (_a = transaction.user) === null || _a === void 0 ? void 0 : _a.coupon;
                 let discountAmount = 0;
                 if (coupon && !coupon.used && coupon.expiresAt > new Date()) {
-                    discountAmount = (transaction.totalPrice * coupon.discountAmount) / 100; // Diskon persentase
+                    discountAmount = (transaction.totalPrice * coupon.discountAmount) / 100; // Hitung diskon
                 }
                 const finalPrice = transaction.OrderDetail.reduce((total, detail) => total + detail.subtotal, 0) - discountAmount;
                 if (finalPrice <= 0) {
@@ -354,7 +367,10 @@ class TransactionController {
             }
             catch (err) {
                 console.error(err);
-                res.status(400).send({ message: "Failed to create snap token" });
+                res.status(400).send({
+                    message: "Failed to create snap token",
+                    error: err.message,
+                });
             }
         });
     }

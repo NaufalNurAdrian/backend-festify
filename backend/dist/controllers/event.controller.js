@@ -262,30 +262,60 @@ class EventController {
                     res.status(400).json({
                         message: "At least one ticket is required",
                     });
-                    return; // Jangan lanjutkan eksekusi
+                    return;
                 }
                 // Konversi eventId menjadi number
                 const parsedEventId = parseInt(eventId, 10);
-                if (isNaN(parsedEventId)) {
+                if (isNaN(parsedEventId) || parsedEventId <= 0) {
                     res.status(400).json({
-                        message: "Invalid eventId. It must be a number.",
+                        message: "Invalid eventId. It must be a positive number.",
                     });
                     return;
                 }
+                // Validasi tiket
+                for (const ticket of tickets) {
+                    if (!ticket.type || !ticket.seats || !ticket.lastOrder) {
+                        res.status(400).json({
+                            message: "Each ticket must have a type, seats, and lastOrder.",
+                        });
+                        return;
+                    }
+                    if (ticket.type !== "FREE" &&
+                        (ticket.price === undefined || ticket.price <= 0)) {
+                        res.status(400).json({
+                            message: "Non-FREE tickets must have a price greater than 0.",
+                        });
+                        return;
+                    }
+                }
                 // Proses pembuatan tiket
-                const ticketData = tickets.map((ticket) => ({
-                    ticket_id: ticket.ticket_id,
-                    type: ticket.type,
-                    price: ticket.price,
-                    seats: ticket.seats,
-                    lastOrder: new Date(ticket.lastOrder),
-                    event_id: parsedEventId, // Pastikan ini bertipe number
-                }));
-                // Simpan tiket ke database
-                yield prisma_1.default.ticket.createMany({ data: ticketData });
-                res.status(201).json({
-                    message: "Tickets created successfully",
+                const ticketData = tickets.map((ticket) => {
+                    if (ticket.type === "FREE" && ticket.price !== 0) {
+                        ticket.price = 0; // Pastikan harga untuk tiket FREE adalah 0
+                    }
+                    return {
+                        ticket_id: ticket.ticket_id,
+                        type: ticket.type,
+                        price: ticket.price,
+                        seats: ticket.seats,
+                        lastOrder: new Date(ticket.lastOrder),
+                        event_id: parsedEventId,
+                    };
                 });
+                // Simpan tiket ke database
+                try {
+                    yield prisma_1.default.ticket.createMany({ data: ticketData });
+                    res.status(201).json({
+                        message: "Tickets created successfully",
+                    });
+                }
+                catch (error) {
+                    console.error("Prisma Error: ", error.message);
+                    res.status(500).json({
+                        message: "Error saving tickets to the database",
+                        error: error.message,
+                    });
+                }
             }
             catch (error) {
                 console.error(error);
