@@ -185,7 +185,7 @@ export class UserController {
 
   async updateTicket(req: Request, res: Response) {
     try {
-      const user_id = req.params
+      const transaction_id = req.params.transaction_id
       
       await prisma.orderDetail.updateMany({
         data: {
@@ -193,12 +193,15 @@ export class UserController {
         },
         where : {
           transaction: {
-            user_id: user_id
+            paymentStatus: "COMPLETED",
+            transaction_id: +transaction_id
           }
         }
       })
+      res.status(200).send({ message: "update ticket successfully" });
     } catch (error) {
       console.error(error)
+      res.status(400).send({ message: "cannot update ticket" });
     }
   }
 
