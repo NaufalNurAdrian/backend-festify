@@ -288,5 +288,34 @@ class DashboardController {
             }
         });
     }
+    getAnttendeEvent(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            try {
+                const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.user_id;
+                const currentDate = new Date();
+                const anttendeEvent = yield prisma_1.default.orderDetail.aggregate({
+                    _sum: {
+                        qty: true
+                    },
+                    where: {
+                        used: true,
+                        ticketId: {
+                            event: {
+                                organizer: {
+                                    user_id: userId
+                                },
+                                endTime: currentDate
+                            }
+                        }
+                    }
+                });
+                res.status(200).send({ message: "success get attende event", anttendeEvent });
+            }
+            catch (error) {
+                res.status(400).send({ message: error });
+            }
+        });
+    }
 }
 exports.DashboardController = DashboardController;

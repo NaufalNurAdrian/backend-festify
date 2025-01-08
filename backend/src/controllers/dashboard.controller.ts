@@ -282,5 +282,31 @@ export class DashboardController {
       res.status(500).send({ message: "Internal Server Error" });
     }
   }
-  
+
+  async getAnttendeEvent(req: Request, res: Response) {
+    try {
+      const userId = req.user?.user_id;
+      const currentDate = new Date()
+      const anttendeEvent = await prisma.orderDetail.aggregate({
+        _sum: {
+          qty: true
+        },
+        where: {
+          used: true,
+          ticketId: {
+            event: {
+              organizer: {
+                user_id: userId
+              },
+              endTime : currentDate
+            }
+          }
+        }
+      })
+      res.status(200).send({message: "success get attende event", anttendeEvent})
+    } catch (error) {
+      res.status(400).send({message: error})
+    }
+  }
+
 }
