@@ -284,7 +284,7 @@ export class TransactionController {
   }
   
   // Mendapatkan token Midtrans Snap
-  async getSnapToken(req: Request, res: Response) {
+  async getSnapToken(req: Request, res: Response): Promise<void> {
     try {
       const { orderId } = req.body;
 
@@ -294,7 +294,7 @@ export class TransactionController {
         include: {
           OrderDetail: {
             include: {
-              ticketId: { select: { type: true } },
+              ticketId: { select: { type: true, price: true } },
             },
           },
           user: {
@@ -304,9 +304,9 @@ export class TransactionController {
               phone: true,
               coupon: {
                 select: {
-                  discountAmount: true, // Assuming this is percentage-based
-                  expiresAt: true,
-                  used: true, // Tambahkan properti 'used'
+                  discountAmount: true, // Diskon dalam persentase
+                  expiresAt: true, // Tanggal kedaluwarsa kupon
+                  used: true, // Status penggunaan kupon
                 },
               },
             },
@@ -314,7 +314,9 @@ export class TransactionController {
         },
       });
 
-      if (!transaction) throw new Error("Transaction not found");
+      if (!transaction) {
+        throw new Error("Transaction not found");
+      }
 
       if (transaction.paymentStatus === "FAILED") {
         throw new Error(
@@ -322,12 +324,29 @@ export class TransactionController {
         );
       }
 
+      // Cek apakah semua tiket dalam transaksi gratis
+      const isFreeTransaction = transaction.OrderDetail.every(
+        (detail) => detail.ticketId.price === 0
+      );
+
+      if (isFreeTransaction) {
+        // Tandai transaksi sebagai sukses tanpa pembayaran
+        await prisma.transaction.update({
+          where: { transaction_id: orderId },
+          data: { paymentStatus: "COMPLETED" },
+        });
+
+        res.status(200).send({
+          message: "Transaction completed successfully (free tickets).",
+        });
+      }
+
       // Logika untuk diskon hanya jika kupon valid dan belum digunakan
       const coupon = transaction.user?.coupon;
       let discountAmount = 0;
 
       if (coupon && !coupon.used && coupon.expiresAt > new Date()) {
-        discountAmount = (transaction.totalPrice * coupon.discountAmount) / 100; // Diskon persentase
+        discountAmount = (transaction.totalPrice * coupon.discountAmount) / 100; // Hitung diskon
       }
 
       const finalPrice =
@@ -340,13 +359,11 @@ export class TransactionController {
         throw new Error("Final price cannot be zero or negative.");
       }
 
-      type TicketType = string;
-
       type ItemDetail = {
         id: number | "DISCOUNT"; // ID untuk item atau diskon
         price: number;
         quantity: number;
-        name: TicketType | "Discount"; // Nama tipe tiket atau "Discount"
+        name: string; // Nama tipe tiket atau "Discount"
       };
 
       // Format item details untuk Midtrans
@@ -397,7 +414,10 @@ export class TransactionController {
       res.status(200).send({ result: snapTransaction.token });
     } catch (err) {
       console.error(err);
-      res.status(400).send({ message: "Failed to create snap token" });
+      res.status(400).send({
+        message: "Failed to create snap token",
+        error: (err as Error).message,
+      });
     }
   }
 
