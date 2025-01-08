@@ -43,7 +43,7 @@ export class TransactionController {
               );
             }
 
-            const url = `https://backend-festify.vercel.app/api/users/usedticket/${transaction.user_id}`
+            const url = `https://backend-festify.vercel.app/api/users/usedticket/${transaction.transaction_id}`
 
             // Buat orderDetail baru
             await prisma.orderDetail.create({
