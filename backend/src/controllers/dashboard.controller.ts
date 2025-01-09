@@ -70,6 +70,17 @@ export class DashboardController {
         where: {
           user_id: userId,
           paymentStatus: "COMPLETED",
+          OrderDetail: {
+            some: {
+              ticketId: {
+                event: {
+                  organizer: {
+                    user_id: userId
+                  }
+                }
+              }
+            }
+          }
         },
       });
   
