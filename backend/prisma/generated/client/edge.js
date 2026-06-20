@@ -254,7 +254,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\nurad\\OneDrive\\Desktop\\JCWD0508\\backend-festify\\backend\\prisma\\generated\\client",
+      "value": "/Users/naufalnuradrian/Documents/Pribadi/LAB/backend-festify/backend/prisma/generated/client",
       "fromEnvVar": null
     },
     "config": {
@@ -263,17 +263,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "darwin-arm64",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\nurad\\OneDrive\\Desktop\\JCWD0508\\backend-festify\\backend\\prisma\\schema.prisma",
+    "sourceFilePath": "/Users/naufalnuradrian/Documents/Pribadi/LAB/backend-festify/backend/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../..",
   "clientVersion": "6.0.0",
