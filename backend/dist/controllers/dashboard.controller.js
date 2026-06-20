@@ -294,6 +294,17 @@ class DashboardController {
             try {
                 const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.user_id;
                 const currentDate = new Date();
+                const userOwnAttende = yield prisma_1.default.orderDetail.aggregate({
+                    _sum: {
+                        qty: true
+                    },
+                    where: {
+                        used: true,
+                        transaction: {
+                            user_id: userId
+                        }
+                    }
+                });
                 const anttendeEvent = yield prisma_1.default.orderDetail.aggregate({
                     _sum: {
                         qty: true
@@ -310,7 +321,8 @@ class DashboardController {
                         }
                     }
                 });
-                res.status(200).send({ message: "success get attende event", anttendeEvent });
+                const totalAttendeEvent = (userOwnAttende._sum.qty || 0) + (anttendeEvent._sum.qty || 0);
+                res.status(200).send({ message: "success get attende event", totalAttendeEvent });
             }
             catch (error) {
                 res.status(400).send({ message: error });

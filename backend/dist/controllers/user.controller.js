@@ -202,20 +202,23 @@ class UserController {
     updateTicket(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const user_id = req.params;
+                const transaction_id = req.params.transaction_id;
                 yield prisma_1.default.orderDetail.updateMany({
                     data: {
                         used: true
                     },
                     where: {
                         transaction: {
-                            user_id: user_id
+                            paymentStatus: "COMPLETED",
+                            transaction_id: +transaction_id
                         }
                     }
                 });
+                res.status(200).send({ message: "update ticket successfully" });
             }
             catch (error) {
                 console.error(error);
+                res.status(400).send({ message: "cannot update ticket" });
             }
         });
     }

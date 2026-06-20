@@ -46,7 +46,7 @@ class TransactionController {
                         if (item.qty > ticket.seats) {
                             throw new Error(`Insufficient seats for ticket ID: ${item.ticketId.ticket_id}`);
                         }
-                        const url = `https://backend-festify.vercel.app/api/users/usedticket/${transaction.user_id}`;
+                        const url = `https://backend-festify.vercel.app/api/users/usedticket/${transaction.transaction_id}`;
                         // Buat orderDetail baru
                         yield prisma.orderDetail.create({
                             data: {
