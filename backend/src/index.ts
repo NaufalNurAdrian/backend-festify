@@ -14,7 +14,7 @@ import { TransactionRouter } from "./routers/order.router";
 import { ReviewController } from "./controllers/review.controller";
 import { ReviewRouter } from "./routers/review.router";
 
-const PORT: number = 8000;
+const PORT = Number(process.env.PORT) || 8080;
 
 const app: Application = express();
 app.use(express.json());
@@ -47,6 +47,6 @@ app.use("/api/transactions", transactionRouter.getRouter());
 app.use("/api/dashboard", dashboardRouter.getRouter());
 app.use("/api/reviews", reviewRouter.getRouter());
 
-app.listen(PORT, () => {
-  console.log(`server running on -> http://localhost:${PORT}/api`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`server running on port ${PORT}`);
 });
