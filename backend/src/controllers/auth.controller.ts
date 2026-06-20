@@ -10,6 +10,11 @@ import { transporter } from "../services/mailer";
 import { generateReferralCode } from "../utils/generateReferralCode";
 import { addMonths } from "date-fns";
 
+const toString = (v: string | string[] | undefined): string | undefined => {
+  if (Array.isArray(v)) return v[0];
+  return v;
+};
+
 export class AuthController {
   async registerUser(req: Request, res: Response) {
     try {
@@ -95,7 +100,9 @@ export class AuthController {
   async verifyUser(req: Request, res: Response) {
     try {
       const { token } = req.params;
-      const verifiedUser: any = verify(token, process.env.JWT_KEY!);
+      const tokenStr = toString(token);
+      if (!tokenStr) throw { message: "Invalid token" };
+      const verifiedUser: any = verify(tokenStr, process.env.JWT_KEY!);
 
       // Ambil data user yang diverifikasi
       const user = await prisma.user.findUnique({
