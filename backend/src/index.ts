@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 process.on("uncaughtException", (err) => {
   console.error("UNCAUGHT:", err);
 });
@@ -6,39 +9,52 @@ process.on("unhandledRejection", (err) => {
   console.error("UNHANDLED:", err);
 });
 
-import dotenv from "dotenv";
-dotenv.config();
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
-import { AuthRouter } from "./routers/auth.router";
 import cookieParser from "cookie-parser";
+
+// Routers
+import { AuthRouter } from "./routers/auth.router";
 import { UserRouter } from "./routers/user.router";
 import { EventRouter } from "./routers/event.router";
-
 import { TicketRouter } from "./routers/ticket.router";
-
 import { DashboardRouter } from "./routers/dashboard.router";
 import { TransactionRouter } from "./routers/order.router";
-import { ReviewController } from "./controllers/review.controller";
 import { ReviewRouter } from "./routers/review.router";
 
-const PORT = Number(process.env.PORT) || 8080;
-
+// =========================
+// APP INIT
+// =========================
 const app: Application = express();
+
+// =========================
+// MIDDLEWARE
+// =========================
 app.use(express.json());
+app.use(cookieParser());
+
 app.use(
   cors({
-    origin: [`${process.env.BASE_URL_FE}`],
+    origin: process.env.BASE_URL_FE || "*",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   })
 );
-app.use(cookieParser());
+
+// =========================
+// HEALTH CHECK (CLOUD RUN)
+// =========================
+app.get("/", (req: Request, res: Response) => {
+  res.status(200).send("OK");
+});
 
 app.get("/api", (req: Request, res: Response) => {
   res.status(200).send("Welcome to my API");
 });
 
+// =========================
+// ROUTES
+// =========================
 const authRouter = new AuthRouter();
 const userRouter = new UserRouter();
 const eventsRouter = new EventRouter();
@@ -55,6 +71,14 @@ app.use("/api/transactions", transactionRouter.getRouter());
 app.use("/api/dashboard", dashboardRouter.getRouter());
 app.use("/api/reviews", reviewRouter.getRouter());
 
+// =========================
+// PORT (CLOUD RUN SAFE)
+// =========================
+const PORT = parseInt(process.env.PORT ?? "8080", 10);
+
+// =========================
+// START SERVER
+// =========================
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`server running on port ${PORT}`);
+  console.log(`🚀 server running on port ${PORT}`);
 });
