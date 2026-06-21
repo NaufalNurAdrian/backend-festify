@@ -1,27 +1,35 @@
 steps:
-  # Build image
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - build
-      - '-t'
-      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/backend-repo/backend:$COMMIT_SHA'
-      - '.'
+  # 1. Install dependencies
+  - name: "node:20"
+    entrypoint: "npm"
+    args: ["install"]
 
-  # Push image
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - push
-      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/backend-repo/backend:$COMMIT_SHA'
+  # 2. Prisma generate
+  - name: "node:20"
+    entrypoint: "npx"
+    args: ["prisma", "generate"]
 
-  # Deploy ke Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+  # 3. MIGRATION STEP (INI YANG KAMU BUTUHKAN)
+  - name: "node:20"
+    entrypoint: "npx"
+    args: ["prisma", "migrate", "deploy"]
+    env:
+      - DATABASE_URL=${_DATABASE_URL}
+
+  # 4. Build project
+  - name: "node:20"
+    entrypoint: "npm"
+    args: ["run", "build"]
+
+  # 5. Deploy ke Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     args:
+      - gcloud
       - run
       - deploy
-      - backend-service
+      - front-end-festify
       - --image
-      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/backend-repo/backend:$COMMIT_SHA'
+      - gcr.io/$PROJECT_ID/IMAGE_NAME
       - --region
       - asia-southeast2
       - --platform
