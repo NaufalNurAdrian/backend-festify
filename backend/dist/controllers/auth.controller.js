@@ -23,6 +23,11 @@ const handlebars_1 = __importDefault(require("handlebars"));
 const mailer_1 = require("../services/mailer");
 const generateReferralCode_1 = require("../utils/generateReferralCode");
 const date_fns_1 = require("date-fns");
+const toString = (v) => {
+    if (Array.isArray(v))
+        return v[0];
+    return v;
+};
 class AuthController {
     registerUser(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -100,7 +105,10 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { token } = req.params;
-                const verifiedUser = (0, jsonwebtoken_1.verify)(token, process.env.JWT_KEY);
+                const tokenStr = toString(token);
+                if (!tokenStr)
+                    throw { message: "Invalid token" };
+                const verifiedUser = (0, jsonwebtoken_1.verify)(tokenStr, process.env.JWT_KEY);
                 // Ambil data user yang diverifikasi
                 const user = yield prisma_1.default.user.findUnique({
                     where: { user_id: verifiedUser.user_id },

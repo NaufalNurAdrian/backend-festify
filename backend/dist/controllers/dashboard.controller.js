@@ -85,6 +85,17 @@ class DashboardController {
                     where: {
                         user_id: userId,
                         paymentStatus: "COMPLETED",
+                        OrderDetail: {
+                            some: {
+                                ticketId: {
+                                    event: {
+                                        organizer: {
+                                            user_id: userId
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                 });
                 // Total transaksi dari transaksi pengguna lain yang membeli tiket event userId

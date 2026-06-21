@@ -16,11 +16,23 @@ exports.EventController = void 0;
 const prisma_1 = __importDefault(require("../prisma"));
 const slug_1 = require("../helpers/slug");
 const cloudinary_1 = require("../services/cloudinary");
+const toString = (v) => {
+    if (!v)
+        return undefined;
+    if (typeof v === "string")
+        return v;
+    if (Array.isArray(v))
+        return toString(v[0]);
+    return undefined;
+};
 class EventController {
+    // =========================
+    // GET EVENTS (PUBLIC)
+    // =========================
     getEventId(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { search } = req.query;
+                const search = toString(req.query.search);
                 const filter = {};
                 if (search) {
                     filter.title = { contains: search, mode: "insensitive" };
@@ -59,6 +71,9 @@ class EventController {
             }
         });
     }
+    // =========================
+    // GET USER EVENTS
+    // =========================
     getEventUser(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
@@ -66,6 +81,7 @@ class EventController {
                 const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.user_id;
                 if (!userId) {
                     res.status(401).send({ message: "Unauthorized, login first" });
+                    return;
                 }
                 const events = yield prisma_1.default.event.findMany({
                     where: {
@@ -104,6 +120,9 @@ class EventController {
             }
         });
     }
+    // =========================
+    // GET COMPLETED EVENTS
+    // =========================
     getEventCompleted(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
@@ -111,6 +130,7 @@ class EventController {
                 const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.user_id;
                 if (!userId) {
                     res.status(401).send({ message: "Unauthorized, login first" });
+                    return;
                 }
                 const events = yield prisma_1.default.event.findMany({
                     where: {
@@ -147,10 +167,17 @@ class EventController {
             }
         });
     }
+    // =========================
+    // GET EVENT BY SLUG
+    // =========================
     getEventSlug(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { slug } = req.params;
+                const slug = toString(req.params.slug);
+                if (!slug) {
+                    res.status(400).send({ message: "Slug is required" });
+                    return;
+                }
                 const events = yield prisma_1.default.event.findUnique({
                     where: { slug },
                     select: {
@@ -189,13 +216,15 @@ class EventController {
             }
         });
     }
+    // =========================
+    // CREATE EVENT
+    // =========================
     createEvent(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
             const { title, description, location, startTime, endTime, category } = req.body;
             const userId = Number((_a = req.user) === null || _a === void 0 ? void 0 : _a.user_id);
             try {
-                // Validasi user
                 const user = yield prisma_1.default.user.findUnique({
                     where: { user_id: userId },
                 });
@@ -203,29 +232,23 @@ class EventController {
                     res.status(404).json({ message: "User not found" });
                     return;
                 }
-                // Validasi dan unggah thumbnail ke Cloudinary
                 if (!req.file) {
                     res.status(400).json({ message: "Thumbnail is required" });
                     return;
                 }
                 const uploadResult = yield (0, cloudinary_1.cloudinaryUpload)(req.file, "event");
-                // Generate slug unik
                 let slug = (0, slug_1.createSlug)(title);
                 let attempt = 0;
                 while (yield prisma_1.default.event.findUnique({ where: { slug } })) {
                     attempt++;
                     slug = (0, slug_1.createSlug)(`${title}-${attempt}`);
                 }
-                // Validasi waktu
                 const parsedStartTime = new Date(startTime);
                 const parsedEndTime = new Date(endTime);
                 if (isNaN(parsedStartTime.getTime()) || isNaN(parsedEndTime.getTime())) {
-                    res
-                        .status(400)
-                        .json({ message: "Invalid date format for startTime or endTime" });
+                    res.status(400).json({ message: "Invalid date format" });
                     return;
                 }
-                // Buat event di database
                 const event = yield prisma_1.default.event.create({
                     data: {
                         title,
@@ -235,54 +258,63 @@ class EventController {
                         endTime: parsedEndTime,
                         category,
                         slug,
-                        thumbnail: uploadResult.secure_url, // URL hasil upload
+                        thumbnail: uploadResult.secure_url,
                         user_id: userId,
                     },
                 });
                 res.status(201).json({
                     message: "Event created successfully",
-                    event_id: event.event_id, // Kembalikan event_id untuk pembuatan tiket
+                    event_id: event.event_id,
                 });
             }
             catch (error) {
-                console.error("Error caught in createEvent:", error);
-                res
-                    .status(500)
-                    .json({ message: "Internal server error", error: error.message });
+                console.error(error);
+                res.status(500).json({
+                    message: "Internal server error",
+                    error: error.message,
+                });
             }
         });
     }
+    // =========================
+    // CREATE TICKET
+    // =========================
     createTicket(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { eventId } = req.params;
+                const eventId = Number(req.params.eventId);
                 const { tickets } = req.body;
-                // Pastikan ada tiket yang dikirimkan
                 if (!tickets || tickets.length === 0) {
-                    res.status(400).json({
-                        message: "At least one ticket is required",
-                    });
-                    return; // Jangan lanjutkan eksekusi
-                }
-                // Konversi eventId menjadi number
-                const parsedEventId = parseInt(eventId, 10);
-                if (isNaN(parsedEventId)) {
-                    res.status(400).json({
-                        message: "Invalid eventId. It must be a number.",
-                    });
+                    res.status(400).json({ message: "At least one ticket is required" });
                     return;
                 }
-                // Proses pembuatan tiket
+                if (isNaN(eventId)) {
+                    res.status(400).json({ message: "Invalid eventId" });
+                    return;
+                }
+                for (const ticket of tickets) {
+                    if (!ticket.type || !ticket.seats || !ticket.lastOrder) {
+                        res.status(400).json({ message: "Invalid ticket data" });
+                        return;
+                    }
+                    if (ticket.type !== "FREE" &&
+                        (ticket.price === undefined || ticket.price <= 0)) {
+                        res.status(400).json({
+                            message: "Invalid price for non-FREE ticket",
+                        });
+                        return;
+                    }
+                }
                 const ticketData = tickets.map((ticket) => ({
-                    ticket_id: ticket.ticket_id,
                     type: ticket.type,
-                    price: ticket.price,
+                    price: ticket.type === "FREE" ? 0 : ticket.price,
                     seats: ticket.seats,
                     lastOrder: new Date(ticket.lastOrder),
-                    event_id: parsedEventId, // Pastikan ini bertipe number
+                    event_id: eventId,
                 }));
-                // Simpan tiket ke database
-                yield prisma_1.default.ticket.createMany({ data: ticketData });
+                yield prisma_1.default.ticket.createMany({
+                    data: ticketData,
+                });
                 res.status(201).json({
                     message: "Tickets created successfully",
                 });
@@ -291,6 +323,7 @@ class EventController {
                 console.error(error);
                 res.status(500).json({
                     message: "Error creating tickets",
+                    error: error.message,
                 });
             }
         });
