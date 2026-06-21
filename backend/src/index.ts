@@ -1,5 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config();
+import "./instrument"; 
 
 console.log("🔥 [BOOT] Starting application...");
 

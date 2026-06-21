@@ -9,19 +9,33 @@ steps:
     entrypoint: "npx"
     args: ["prisma", "generate"]
 
-  # 3. MIGRATION STEP (INI YANG KAMU BUTUHKAN)
+  # 3. Prisma migrate
   - name: "node:20"
     entrypoint: "npx"
     args: ["prisma", "migrate", "deploy"]
     env:
       - DATABASE_URL=${_DATABASE_URL}
 
-  # 4. Build project
+  # 4. Build TypeScript
   - name: "node:20"
     entrypoint: "npm"
     args: ["run", "build"]
 
-  # 5. Deploy ke Cloud Run
+  # 5. Build Docker image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - -t
+      - asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/backend-festify/front-end-festify:$COMMIT_SHA
+      - .
+
+  # 6. Push Docker image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - push
+      - asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/backend-festify/front-end-festify:$COMMIT_SHA
+
+  # 7. Deploy ke Cloud Run dengan image yang benar
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     args:
       - gcloud
@@ -29,8 +43,13 @@ steps:
       - deploy
       - front-end-festify
       - --image
-      - gcr.io/$PROJECT_ID/festify-api
+      - asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/backend-festify/front-end-festify:$COMMIT_SHA
       - --region
       - asia-southeast2
       - --platform
       - managed
+      - --set-env-vars
+      - DATABASE_URL=${_DATABASE_URL}
+
+substitutions:
+  _DATABASE_URL: ""
